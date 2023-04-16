@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Controller\UsersController;
 
 class RegisterController extends AbstractController
 {
@@ -19,6 +20,7 @@ class RegisterController extends AbstractController
         private UserPasswordHasherInterface $passwordHasher,
         private JWTTokenManagerInterface $JWTTokenManager,
         private UserRepository $userRepository,
+        private UsersController $usersController,
     ) {
     }
 
@@ -38,6 +40,9 @@ class RegisterController extends AbstractController
         $user = new User();
         $user->setRoles($content['role']);
         $user->setEmail($content['email']);
+        $user->setName($content['name']);
+        $user->setSurname($content['surname']);
+        $user->setAisId($content['aisId']);
         $user->setPassword($this->passwordHasher->hashPassword($user, $content['password']));
 
         try {
@@ -46,7 +51,19 @@ class RegisterController extends AbstractController
             return new JsonResponse(["message"=>$exception->getMessage(), "code"=>$exception->getCode()], 500);
         }
 
+        $created_user = $this->userRepository->findOneBy(['email' => $content['email']]);
+        if (!$created_user) {
+            return new JsonResponse(["message"=>"User was not found!", "code"=>Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
+        }
+
         $data = [
+            'token' => $this->JWTTokenManager->create($user),
+            'id' => $created_user->getId(),
+            'email' => $created_user->getEmail(),
+            'roles' => $created_user->getRoles(),
+            'name' => $created_user->getName(),
+            'surname' => $created_user->getSurname(),
+            'aisId' => $created_user->getAisId(),
             'message' => "created User",
         ];
 
