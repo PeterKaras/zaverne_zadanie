@@ -1,0 +1,7 @@
+#index:
+#    path: /
+#    controller: App\Controller\DefaultController::index
+
+api_auth_email:
+  path: /api/auth/email #Login route -> POST username, password
+  methods: ["POST"]

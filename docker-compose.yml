@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+
+  cli:
+    image: ghcr.io/andrejvysny/php-cli:8.1
+    volumes:
+      - .:/var/www
+
+  web:
+    depends_on:
+      - database
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    container_name: web
+    ports:
+      - "80:80"
+    environment:
+      DATABASE_URL: mysql://root:root@database:3306/app?serverVersion=10.5&charset=utf8mb4
+
+    volumes:
+      - .:/var/www/html
+
+  database:
+    image: mariadb:10.5
+    container_name: database
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql:rw
+volumes:
+  db-data:

@@ -1,0 +1,27 @@
+api_platform:
+    version: 0.1.0
+    graphql:
+        # Enabled by default with installed webonyx/graphql-php.
+        enabled: false
+    mapping:
+        paths: ['%kernel.project_dir%/src/Entity']
+    patch_formats:
+        json: ['application/merge-patch+json']
+    swagger:
+        api_keys:
+            apiKey:
+                name: Authorization
+                type: header
+        versions: [3]
+    formats:
+        json: ['application/json']
+        html: ['text/html']
+        #jsonld: ['application/ld+json']
+
+   # error_formats:
+       # jsonproblem: ['application/problem+json']
+       # jsonapi: ['application/vnd.api+json']
+
+    defaults:
+        stateless: true
+        pagination_enabled: false
