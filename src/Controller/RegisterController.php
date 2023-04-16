@@ -29,14 +29,13 @@ class RegisterController extends AbstractController
     {
         $content = json_decode($request->getContent(), true);
 
-        if (empty($content['email']) || empty($content['password'] || empty($content['role']))) {
+        if (empty($content['email']) || empty($content['password'] || empty($content['role']) || empty($content['surname']) || empty($content['name']) || empty($content['aisId']))) {
             return new JsonResponse(["message"=>"Missing one of parameters: email, password", "code"=>Response::HTTP_NOT_ACCEPTABLE], Response::HTTP_NOT_ACCEPTABLE);
         }
 
         if ($this->userRepository->findBy(['email' => $content['email']])) {
             return new JsonResponse(["message"=>"Email already registered!", "code"=>Response::HTTP_CONFLICT], Response::HTTP_CONFLICT);
         }
-
         $user = new User();
         $user->setRoles($content['role']);
         $user->setEmail($content['email']);
