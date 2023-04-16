@@ -32,6 +32,10 @@ class UsersController extends AbstractController
             'id'=>$user->getId(),
             'email'=>$user->getEmail(),
             'roles'=>$user->getRoles(),
+            'name'=>$user->getName(),
+            'surname'=>$user->getSurname(),
+            'aisId'=>$user->getAisId(),
+            'message'=>'User was found!'
         ];
 
 
