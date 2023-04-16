@@ -1,7 +1,7 @@
 nelmio_cors:
     defaults:
         origin_regex: true
-        allow_origin: []
+        allow_origin: ["*"]
         allow_methods: ['GET']
         allow_headers: ['Content-Type', 'Authorization']
         expose_headers: ['Link']
