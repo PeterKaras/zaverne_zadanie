@@ -30,7 +30,8 @@ class UsersController extends AbstractController
 
         $data = [
             'id'=>$user->getId(),
-            'email'=>$user->getEmail()
+            'email'=>$user->getEmail(),
+            'roles'=>$user->getRoles(),
         ];
 
 

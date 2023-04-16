@@ -46,10 +46,8 @@ class RegisterController extends AbstractController
             return new JsonResponse(["message"=>$exception->getMessage(), "code"=>$exception->getCode()], 500);
         }
 
-        $token = $this->JWTTokenManager->create($user);
-
         $data = [
-            'token' => $token,
+            'message' => "created User",
         ];
 
         return new JsonResponse($data, Response::HTTP_CREATED);
