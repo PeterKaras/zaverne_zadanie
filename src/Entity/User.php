@@ -6,6 +6,9 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use App\Repository\PrikladRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -35,6 +38,50 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private ?int $aisId = null;
+
+    /**
+     * @var Collection|Priklad[]
+     *
+     * @ORM\ManyToMany(targetEntity=Priklad::class, inversedBy="users")
+     * @ORM\JoinTable(
+     *     name="user_priklad",
+     *     joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="priklad_id", referencedColumnName="id")}
+     * )
+     */
+    private Collection|array $priklady;
+
+    public function __construct()
+    {
+        $this->priklady = new ArrayCollection();
+    }
+
+    /**
+     * @return Collection|Priklad[]
+     */
+    public function getPriklady(): Collection
+    {
+        return $this->priklady;
+    }
+
+    public function addPriklad(Priklad $priklad): self
+    {
+        if (!$this->priklady->contains($priklad)) {
+            $this->priklady[] = $priklad;
+            $priklad->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removePriklad(Priklad $priklad): self
+    {
+        if ($this->priklady->removeElement($priklad)) {
+            $priklad->removeUser($this);
+        }
+
+        return $this;
+    }
 
     public function getId(): ?int
     {
@@ -160,17 +207,5 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
-    }
-
-    public function getAidId(): ?int
-    {
-        return $this->aidId;
-    }
-
-    public function setAidId(int $aidId): self
-    {
-        $this->aidId = $aidId;
-
-        return $this;
     }
 }
