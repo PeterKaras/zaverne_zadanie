@@ -4,6 +4,9 @@ namespace App\Entity;
 
 use App\Repository\PrikladRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use App\Repository\UserRepository;
 
 #[ORM\Entity(repositoryClass: PrikladRepository::class)]
 class Priklad
@@ -27,6 +30,18 @@ class Priklad
 
     #[ORM\Column]
     private ?bool $isSubmitted = null;
+
+    /**
+     * @var Collection|User[]
+     *
+     * @ORM\ManyToMany(targetEntity=User::class, mappedBy="priklady")
+     */
+    private Collection $users;
+
+    public function __construct()
+    {
+        $this->users = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -89,6 +104,33 @@ class Priklad
     public function setIsSubmitted(bool $isSubmitted): self
     {
         $this->isSubmitted = $isSubmitted;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
+    public function addUser(User $user): self
+    {
+        if (!$this->users->contains($user)) {
+            $this->users[] = $user;
+            $user->addPriklad($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(User $user): self
+    {
+        if ($this->users->removeElement($user)) {
+            $user->removePriklad($this);
+        }
 
         return $this;
     }
