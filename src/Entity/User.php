@@ -6,7 +6,6 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use App\Repository\PrikladRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
@@ -51,17 +50,50 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     private Collection|array $priklady;
 
+    /**
+        #[ORM\ManyToMany(targetEntity: Kolekcia::class, inversedBy: 'users')]
+        #[ORM\JoinTable(name: 'kolekcia_user',
+        joinColumns: [#[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]],
+        inverseJoinColumns: [#[ORM\JoinColumn(name: 'kolekcia_id', referencedColumnName: 'id')]] )]
+     */
+    private Collection $kolekcias;
+
+
     public function __construct()
     {
         $this->priklady = new ArrayCollection();
+        $this->kolekcias = new ArrayCollection();
     }
 
     /**
-     * @return Collection|Priklad[]
+     * @return Collection
      */
     public function getPriklady(): Collection
     {
         return $this->priklady;
+    }
+    public function getKolekcias(): Collection
+    {
+        return $this->kolekcias;
+    }
+
+    public function addKolekcia(Kolekcia $kolekcia): self
+    {
+        if (!$this->kolekcias->contains($kolekcia)) {
+            $this->kolekcias[] = $kolekcia;
+        }
+
+        return $this;
+    }
+
+    public function removeKolekcia(Kolekcia $kolekcia): self
+    {
+        if ($this->kolekcias->contains($kolekcia)) {
+            $this->kolekcias->removeElement($kolekcia);
+            $kolekcia->removeUser($this);
+        }
+
+        return $this;
     }
 
     public function addPriklad(Priklad $priklad): self

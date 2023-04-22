@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\PrikladRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -17,6 +18,15 @@ class Priklad
     private ?int $id = null;
 
     #[ORM\Column]
+    private ?string $collectionId = null;
+
+    #[ORM\Column(type: Types::SIMPLE_ARRAY)]
+    private array $assignment = [];
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $image = null;
+
+    #[ORM\Column(nullable: true)]
     private ?int $maxPoints = null;
 
     #[ORM\Column(nullable: true)]
@@ -25,11 +35,14 @@ class Priklad
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $result = null;
 
-    #[ORM\Column]
-    private ?bool $isCorrect = null;
+    #[ORM\Column(nullable: true)]
+    private ?bool $isCorrect = false;
 
-    #[ORM\Column]
-    private ?bool $isSubmitted = null;
+    #[ORM\Column(nullable: true)]
+    private ?bool $isSubmitted = false;
+
+    #[ORM\Column(length: 255)]
+    private ?string $solution = null;
 
     /**
      * @var Collection|User[]
@@ -38,9 +51,90 @@ class Priklad
      */
     private Collection $users;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Kolekcia::class, inversedBy="priklady")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private ?Kolekcia $kolekcia;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
+    }
+
+    public function getKolekcia(): ?Kolekcia
+    {
+        return $this->kolekcia;
+    }
+
+    public function setKolekcia(?Kolekcia $kolekcia): self
+    {
+        $this->kolekcia = $kolekcia;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCollectionId(): ?string
+    {
+        return $this->collectionId;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAssignment(): array
+    {
+        return $this->assignment;
+    }
+
+    /**
+     * @param array $assignment
+     */
+    public function setAssignment(array $assignment): void
+    {
+        $this->assignment = $assignment;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    /**
+     * @param string|null $image
+     */
+    public function setImage(?string $image): void
+    {
+        $this->image = $image;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSolution(): ?string
+    {
+        return $this->solution;
+    }
+
+    /**
+     * @param string|null $solution
+     */
+    public function setSolution(?string $solution): void
+    {
+        $this->solution = $solution;
+    }
+
+    /**
+     * @param string|null $collectionId
+     */
+    public function setCollectionId(?string $collectionId): void
+    {
+        $this->collectionId = $collectionId;
     }
 
     public function getId(): ?int
