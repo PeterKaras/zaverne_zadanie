@@ -214,7 +214,6 @@ class Priklad
     {
         if (!$this->users->contains($user)) {
             $this->users[] = $user;
-            $user->addPriklad($this);
         }
 
         return $this;

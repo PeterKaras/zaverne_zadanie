@@ -100,7 +100,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->priklady->contains($priklad)) {
             $this->priklady[] = $priklad;
-            $priklad->addUser($this);
         }
 
         return $this;
