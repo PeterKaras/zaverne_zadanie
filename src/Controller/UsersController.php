@@ -26,45 +26,48 @@ class UsersController extends AbstractController
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function me(): JsonResponse
     {
-        $user = $this->userRepository->findOneBy(['email'=>$this->getUser()->getUserIdentifier()]);
+        $user = $this->userRepository->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
         if (!$user) {
             throw $this->createNotFoundException('User was not found!');
         }
 
         $data = [
-            'id'=>$user->getId(),
-            'email'=>$user->getEmail(),
-            'roles'=>$user->getRoles(),
-            'name'=>$user->getName(),
-            'surname'=>$user->getSurname(),
-            'aisId'=>$user->getAisId(),
-            'message'=>'User was found!'
+            'id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'roles' => $user->getRoles(),
+            'name' => $user->getName(),
+            'surname' => $user->getSurname(),
+            'aisId' => $user->getAisId(),
+            'message' => 'User was found!'
         ];
 
 
         return new JsonResponse($data);
     }
 
-    #[Route('/', methods: 'GET')]
-    #[IsGranted("ROLE_ADMIN")]
+    #[Route('/users', methods: ['GET'])]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function index(): JsonResponse
     {
         $users = $this->userRepository->findAll();
         $data = [];
 
         foreach ($users as $user) {
-            $data[] = [
+            array_push($data, [
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
+                'ais_id' => $user->getAisId(),
+                'name' => $user->getName(),
+                'surname' => $user->getSurname(),
                 'roles' => $user->getRoles(),
-            ];
+            ]);
         }
 
-        return new JsonResponse($data);
+        return new JsonResponse(["data" => $data], Response::HTTP_OK);
     }
 
-    #[Route('/{id}', methods: 'GET')]
-    #[IsGranted("ROLE_ADMIN")]
+    #[Route('users/{id}', methods: 'GET')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function show(int $id): JsonResponse
     {
         $user = $this->userRepository->find($id);
@@ -83,7 +86,7 @@ class UsersController extends AbstractController
     }
 
     #[Route('/', methods: 'POST')]
-    #[IsGranted("ROLE_ADMIN")]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
