@@ -33,14 +33,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $name = null;
 
     #[ORM\Column(nullable: true)]
-    private array $priklady = [];
+    private ?array $priklady;
 
     /**
      * @return array
      */
     public function getPriklady(): array
     {
-        return $this->priklady;
+        if ($this->priklady === null) {
+            $this->priklady = [];
+            return $this->priklady;
+        } else {
+            return $this->priklady;
+        }
     }
 
     /**

@@ -51,7 +51,7 @@ class Priklad
     private ?string $solution = null;
 
     #[ORM\Column(nullable: true)]
-    private array $student = [];
+    private ?array $student;
 
     #[ORM\Column(nullable: true)]
     private ?int $teacher = null;
@@ -224,6 +224,9 @@ class Priklad
      */
     public function getStudent(): array
     {
+        if ($this->student === null) {
+            $this->student = [];
+        }
         return $this->student;
     }
 

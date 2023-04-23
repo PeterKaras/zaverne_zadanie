@@ -86,7 +86,6 @@ class CollectionController extends AbstractController{
                 'isSubmitted' => $priklad->isIsSubmitted(),
                 'isCorrect' => $priklad->isIsCorrect(),
                 'solution' => $priklad->getSolution(),
-                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
                 "name" => $kolekcia->getNameOfBlock(),
                 "CollectionId" => $kolekcia->getId(),
             ];
@@ -108,7 +107,7 @@ class CollectionController extends AbstractController{
 
         $data = json_decode($request->getContent(), true);
 
-        $foundCollection = $this->kolekciaRepository->findOneBy(["nameOfBlock" => $data["name"]]);
+        $foundCollection = $this->kolekciaRepository->findOneBy(["name" => $data["name"]]);
         if (!$foundCollection) {
             throw $this->createNotFoundException('Collection was not found!');
         }
@@ -116,12 +115,7 @@ class CollectionController extends AbstractController{
         $foundCollection->setDateToOpen($data["dateToOpen"]);
         $foundCollection->setMaxPoints($data["maxPoints"]);
         $this->kolekciaRepository->save($foundCollection,true);
-        $students = [];
 
-        return new JsonResponse([
-            'message' => 'Collections and Priklady created successfully',
-            'priklady' => $foundCollection->getId(),
-        ], Response::HTTP_CREATED);
         $foundPriklady = $this->prikladRepository->findBy(["name" => $data["name"]]);
 
         foreach ($data["students"] as $student){
@@ -146,10 +140,59 @@ class CollectionController extends AbstractController{
         return $response;
     }
 
-    #[Route('/collection', methods: 'DELETE')]
-    //#[IsGranted("USER_ADMIN")]
-    public function deleteCollection(): void {
-        $this->kolekciaRepository->remove();
+    #[Route('/collection/{id}', methods: 'GET')]
+    //get Priklady by studentId
+    public function getCollection($id): JsonResponse {
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
 
+        $priklady = $this->prikladRepository->findBy(["collectionId" => $id]);
+        $data = [];
+        foreach ($priklady as $priklad){
+            $data[] = [
+                'id' => $priklad->getId(),
+                'prikladId' => $priklad->getPrikladId(),
+                'data' => $priklad->getData(),
+                'image' => $priklad->getImage(),
+                'maxPoints' => $priklad->getMaxPoints(),
+                'isSubmitted' => $priklad->isIsSubmitted(),
+                'isCorrect' => $priklad->isIsCorrect(),
+                'solution' => $priklad->getSolution(),
+                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
+                "CollectionId" => $priklad->getCollectionId(),
+            ];
+        }
+
+        return new JsonResponse($data, Response::HTTP_OK);
+    }
+
+    #[Route('/collection/student/{id}', methods: 'GET')]
+    //get Priklady by studentId
+    public function getCollectionByStudent($id): JsonResponse {
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
+
+        $student = $this->userRepository->findOneBy(["id" => $id]);
+        $data = [];
+
+
+        foreach ($student->getPriklady() as $priklad){
+            $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
+            $data[] = [
+                'id' => $priklad->getId(),
+                'prikladId' => $priklad->getPrikladId(),
+                'data' => $priklad->getData(),
+                'image' => $priklad->getImage(),
+                'maxPoints' => $priklad->getMaxPoints(),
+                'isSubmitted' => $priklad->isIsSubmitted(),
+                'isCorrect' => $priklad->isIsCorrect(),
+                'solution' => $priklad->getSolution(),
+                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
+                "CollectionId" => $priklad->getCollectionId(),
+            ];
+        }
+        return new JsonResponse($data, Response::HTTP_OK);
     }
 }
