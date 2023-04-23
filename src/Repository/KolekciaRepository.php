@@ -63,4 +63,11 @@ class KolekciaRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+    public function deleteAll()
+    {
+        $this->createQueryBuilder('k')
+            ->delete()
+            ->getQuery()
+            ->execute();
+    }
 }

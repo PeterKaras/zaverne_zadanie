@@ -20,11 +20,17 @@ class Priklad
     #[ORM\Column]
     private ?string $collectionId = null;
 
+    #[ORM\Column]
+    private ?string $prikladId = null;
+
     #[ORM\Column(type: Types::SIMPLE_ARRAY)]
-    private array $assignment = [];
+    private array $data = [];
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $name = null;
 
     #[ORM\Column(nullable: true)]
     private ?int $maxPoints = null;
@@ -44,34 +50,29 @@ class Priklad
     #[ORM\Column(length: 255)]
     private ?string $solution = null;
 
-    /**
-     * @var Collection|User[]
-     *
-     * @ORM\ManyToMany(targetEntity=User::class, mappedBy="priklady")
-     */
-    private Collection $users;
+    #[ORM\Column(nullable: true)]
+    private array $student = [];
+
+    #[ORM\Column(nullable: true)]
+    private ?int $teacher = null;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Kolekcia::class, inversedBy="priklady")
-     * @ORM\JoinColumn(nullable=false)
+     * @return string|null
      */
-    private ?Kolekcia $kolekcia;
-
-    public function __construct()
+    public function getName(): ?string
     {
-        $this->users = new ArrayCollection();
+        return $this->name;
     }
 
-    public function getKolekcia(): ?Kolekcia
+    /**
+     * @param string|null $name
+     */
+    public function setName(?string $name): void
     {
-        return $this->kolekcia;
+        $this->name = $name;
     }
 
-    public function setKolekcia(?Kolekcia $kolekcia): self
-    {
-        $this->kolekcia = $kolekcia;
-        return $this;
-    }
+
 
     /**
      * @return string|null
@@ -79,22 +80,6 @@ class Priklad
     public function getCollectionId(): ?string
     {
         return $this->collectionId;
-    }
-
-    /**
-     * @return array
-     */
-    public function getAssignment(): array
-    {
-        return $this->assignment;
-    }
-
-    /**
-     * @param array $assignment
-     */
-    public function setAssignment(array $assignment): void
-    {
-        $this->assignment = $assignment;
     }
 
     /**
@@ -203,28 +188,66 @@ class Priklad
     }
 
     /**
-     * @return Collection
+     * @return string|null
      */
-    public function getUsers(): Collection
+    public function getPrikladId(): ?string
     {
-        return $this->users;
+        return $this->prikladId;
     }
 
-    public function addUser(User $user): self
+    /**
+     * @param string|null $prikladId
+     */
+    public function setPrikladId(?string $prikladId): void
     {
-        if (!$this->users->contains($user)) {
-            $this->users[] = $user;
-        }
-
-        return $this;
+        $this->prikladId = $prikladId;
     }
 
-    public function removeUser(User $user): self
+    /**
+     * @return array
+     */
+    public function getData(): array
     {
-        if ($this->users->removeElement($user)) {
-            $user->removePriklad($this);
-        }
+        return $this->data;
+    }
 
-        return $this;
+    /**
+     * @param array $data
+     */
+    public function setData(array $data): void
+    {
+        $this->data = $data;
+    }
+
+    /**
+     * @return array
+     */
+    public function getStudent(): array
+    {
+        return $this->student;
+    }
+
+    /**
+     * @param array $student
+     */
+    public function setStudent(array $student): void
+    {
+        $this->student = $student;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getTeacher(): ?int
+    {
+        return $this->teacher;
+    }
+
+    /**
+     * @param int|null $teacher
+     */
+    public function setTeacher(?int $teacher): void
+    {
+        $this->teacher = $teacher;
     }
 }

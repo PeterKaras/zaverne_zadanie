@@ -85,7 +85,7 @@ class UsersController extends AbstractController
         return new JsonResponse($data);
     }
 
-    #[Route('/', methods: 'POST')]
+    #[Route('/users', methods: 'POST')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function create(Request $request): JsonResponse
     {
@@ -110,7 +110,7 @@ class UsersController extends AbstractController
         return $response;
     }
 
-    #[Route('/{id}', methods: 'PUT')]
+    #[Route('/users/{id}', methods: 'PUT')]
     #[IsGranted("ROLE_ADMIN")]
     public function update(Request $request, int $id): JsonResponse
     {
@@ -137,7 +137,7 @@ class UsersController extends AbstractController
         return $response;
     }
 
-    #[Route('/{id}', methods: 'DELETE')]
+    #[Route('/users/{id}', methods: 'DELETE')]
     #[IsGranted("ROLE_ADMIN")]
     public function delete(int $id): JsonResponse
     {

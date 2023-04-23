@@ -21,6 +21,10 @@ class CollectionController extends AbstractController{
 
     #[Route('/collection', methods: 'GET')]
     public function getAll(){
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
+
         $kolekcias = $this->kolekciaRepository->findAll();
         $data = [];
         foreach ($kolekcias as $kolekcia){
@@ -29,9 +33,8 @@ class CollectionController extends AbstractController{
                 'name' => $kolekcia->getNameOfBlock(),
                 'dateToOpen' => $kolekcia->getDateToOpen(),
                 'maxPoints' => $kolekcia->getMaxPoints(),
-                //'priklady' => $kolekcia->getPriklady(),
-                'students' => $kolekcia->getUsers(),
                 'message' => 'Kolekcia was found!'
+
             ];
         }
 
@@ -65,7 +68,7 @@ class CollectionController extends AbstractController{
             }
 
             $priklad = new Priklad();
-            $priklad->setAssignment($item['data']);
+            $priklad->setData($item['data']);
             $priklad->setImage($item['image']);
             $priklad->setSolution($item['solution']);
             $priklad->setCollectionId($item['id']);
@@ -76,20 +79,18 @@ class CollectionController extends AbstractController{
 
             $createdCollections[] = [
                 'id' => $priklad->getId(),
-                'prikladId' => $priklad->getCollectionId(),
-                'name' => $priklad->getKolekcia()->getNameOfBlock(),
-                'data' => $priklad->getAssignment(),
+                'prikladId' => $priklad->getPrikladId(),
+                'data' => $priklad->getData(),
                 'image' => $priklad->getImage(),
                 'maxPoints' => $priklad->getMaxPoints(),
                 'isSubmitted' => $priklad->isIsSubmitted(),
                 'isCorrect' => $priklad->isIsCorrect(),
                 'solution' => $priklad->getSolution(),
-                'students' => $priklad->getUsers(),
-                "kolekciaName" => $kolekcia->getNameOfBlock(),
-                "kolekciaId" => $kolekcia->getId(),
+                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
+                "name" => $kolekcia->getNameOfBlock(),
+                "CollectionId" => $kolekcia->getId(),
             ];
         }
-
 
         $response = new JsonResponse([
             'message' => 'Collections and Priklady created successfully',
@@ -102,7 +103,7 @@ class CollectionController extends AbstractController{
 
 
     #[Route('/collection', methods: 'PUT')]
-    //#[IsGranted("teacher")]
+    //#[IsGranted("USER_ADMIN")]
     public function updateCollection(Request $request): JsonResponse {
 
         $data = json_decode($request->getContent(), true);
@@ -113,8 +114,16 @@ class CollectionController extends AbstractController{
         }
 
         $foundCollection->setDateToOpen($data["dateToOpen"]);
-        $foundCollection->setNameOfBlock($data["name"]);
         $foundCollection->setMaxPoints($data["maxPoints"]);
+        $this->kolekciaRepository->save($foundCollection,true);
+        $students = [];
+
+        return new JsonResponse([
+            'message' => 'Collections and Priklady created successfully',
+            'priklady' => $foundCollection->getId(),
+        ], Response::HTTP_CREATED);
+        $foundPriklady = $this->prikladRepository->findBy(["name" => $data["name"]]);
+
         foreach ($data["students"] as $student){
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
             $foundCollection->addUser($foundStudent);
@@ -135,5 +144,12 @@ class CollectionController extends AbstractController{
         $response->setStatusCode(Response::HTTP_CREATED);
 
         return $response;
+    }
+
+    #[Route('/collection', methods: 'DELETE')]
+    //#[IsGranted("USER_ADMIN")]
+    public function deleteCollection(): void {
+        $this->kolekciaRepository->remove();
+
     }
 }

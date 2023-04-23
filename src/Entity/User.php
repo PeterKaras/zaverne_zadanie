@@ -32,87 +32,49 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[ORM\Column(nullable: true)]
+    private array $priklady = [];
+
+    /**
+     * @return array
+     */
+    public function getPriklady(): array
+    {
+        return $this->priklady;
+    }
+
+    /**
+     * @param array $priklady
+     */
+    public function setPriklady(array $priklady): void
+    {
+        $this->priklady[] = $priklady;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getTeacher(): ?int
+    {
+        return $this->teacher;
+    }
+
+    /**
+     * @param int|null $teacher
+     */
+    public function setTeacher(?int $teacher): void
+    {
+        $this->teacher = $teacher;
+    }
+
+    #[ORM\Column(nullable: true)]
+    private ?int $teacher = null;
+
     #[ORM\Column(length: 255)]
     private ?string $surname = null;
 
     #[ORM\Column]
     private ?int $aisId = null;
-
-    /**
-     * @var Collection|Priklad[]
-     *
-     * @ORM\ManyToMany(targetEntity=Priklad::class, inversedBy="users")
-     * @ORM\JoinTable(
-     *     name="user_priklad",
-     *     joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="priklad_id", referencedColumnName="id")}
-     * )
-     */
-    private Collection|array $priklady;
-
-    /**
-        #[ORM\ManyToMany(targetEntity: Kolekcia::class, inversedBy: 'users')]
-        #[ORM\JoinTable(name: 'kolekcia_user',
-        joinColumns: [#[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]],
-        inverseJoinColumns: [#[ORM\JoinColumn(name: 'kolekcia_id', referencedColumnName: 'id')]] )]
-     */
-    private Collection $kolekcias;
-
-
-    public function __construct()
-    {
-        $this->priklady = new ArrayCollection();
-        $this->kolekcias = new ArrayCollection();
-    }
-
-    /**
-     * @return Collection
-     */
-    public function getPriklady(): Collection
-    {
-        return $this->priklady;
-    }
-    public function getKolekcias(): Collection
-    {
-        return $this->kolekcias;
-    }
-
-    public function addKolekcia(Kolekcia $kolekcia): self
-    {
-        if (!$this->kolekcias->contains($kolekcia)) {
-            $this->kolekcias[] = $kolekcia;
-        }
-
-        return $this;
-    }
-
-    public function removeKolekcia(Kolekcia $kolekcia): self
-    {
-        if ($this->kolekcias->contains($kolekcia)) {
-            $this->kolekcias->removeElement($kolekcia);
-            $kolekcia->removeUser($this);
-        }
-
-        return $this;
-    }
-
-    public function addPriklad(Priklad $priklad): self
-    {
-        if (!$this->priklady->contains($priklad)) {
-            $this->priklady[] = $priklad;
-        }
-
-        return $this;
-    }
-
-    public function removePriklad(Priklad $priklad): self
-    {
-        if ($this->priklady->removeElement($priklad)) {
-            $priklad->removeUser($this);
-        }
-
-        return $this;
-    }
 
     public function getId(): ?int
     {

@@ -11,27 +11,8 @@ use Doctrine\Common\Collections\Collection;
 #[ORM\Entity(repositoryClass: KolekciaRepository::class)]
 class Kolekcia
 {
-
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: "kolekcias")]
-    #[ORM\JoinTable(name: "user_kolekcia")]
-    private Collection $users;
-
     #[ORM\Column(nullable: true)]
     private ?int $maxPoints = null;
-
-    /**
-     * @var Collection|Priklad[]
-     *
-     * @ORM\OneToMany(targetEntity=Priklad::class, mappedBy="kolekcia")
-     */
-    private Collection|array $priklady;
-
-
-    public function __construct()
-    {
-        $this->users = new ArrayCollection();
-        $this->priklady = new ArrayCollection();
-    }
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -39,10 +20,16 @@ class Kolekcia
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $nameOfBlock = null;
+    private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $dateToOpen = null;
+
+    #[ORM\Column(nullable: true)]
+    private array $student = [];
+
+    #[ORM\Column(nullable: true)]
+    private ?int $teacher = null;
 
 
     public function getUsers(): Collection
@@ -116,12 +103,12 @@ class Kolekcia
 
     public function getNameOfBlock(): ?string
     {
-        return $this->nameOfBlock;
+        return $this->name;
     }
 
     public function setNameOfBlock(string $nameOfBlock): self
     {
-        $this->nameOfBlock = $nameOfBlock;
+        $this->name = $nameOfBlock;
 
         return $this;
     }
@@ -158,8 +145,54 @@ class Kolekcia
         $this->maxPoints = $maxPoints;
     }
 
-    public function setUsers(mixed $students)
+    /**
+     * @return string|null
+     */
+    public function getName(): ?string
     {
+        return $this->name;
     }
+
+    /**
+     * @param string|null $name
+     */
+    public function setName(?string $name): void
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * @return array
+     */
+    public function getStudent(): array
+    {
+        return $this->student;
+    }
+
+    /**
+     * @param array $student
+     */
+    public function setStudent(array $student): void
+    {
+        $this->student = $student;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getTeacher(): ?int
+    {
+        return $this->teacher;
+    }
+
+    /**
+     * @param int|null $teacher
+     */
+    public function setTeacher(?int $teacher): void
+    {
+        $this->teacher = $teacher;
+    }
+
+
 
 }
