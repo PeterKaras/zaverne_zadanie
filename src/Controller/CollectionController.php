@@ -135,19 +135,17 @@ class CollectionController extends AbstractController{
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
             foreach ($foundPriklady as $priklady){
                 $foundStudent->setPriklady((array)$priklady->getId());
-                $students = $priklady->getStudent();
-                $students[] = $foundStudent->getId();
-                $priklady->setStudent($students);
+                $existingStudents = $priklady->getStudent();
+                $existingStudents[] = $foundStudent->getId();
+                $priklady->setStudent($existingStudents);
                 $priklady->setMaxPoints($data["maxPoints"]/count($foundPriklady));
+                $foundCollection->setStudent($existingStudents);
+                $this->kolekciaRepository->save($foundCollection,true);
                 $this->prikladRepository->save($priklady,true);
             }
             $foundStudent->setTeacher($data["teacherId"]);
             $this->userRepository->save($foundStudent,true);
         }
-
-        $encoders = [new JsonEncoder()];
-        $normalizers = [new ObjectNormalizer()];
-        $serializer = new Serializer($normalizers, $encoders);
 
         $response = new JsonResponse([
             'id' => $foundCollection->getId(),
