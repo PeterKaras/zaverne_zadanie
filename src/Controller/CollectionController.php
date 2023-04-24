@@ -135,6 +135,7 @@ class CollectionController extends AbstractController{
                 $foundStudent->setPriklady((array)$priklady->getId());
                 $existingStudents = $priklady->getStudent();
                 $existingStudents[] = $foundStudent->getId();
+                $existingStudents = array_unique($existingStudents);
                 $priklady->setStudent($existingStudents);
                 $priklady->setMaxPoints($data["maxPoints"]/count($foundPriklady));
                 $foundCollection->setStudent($existingStudents);
