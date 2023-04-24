@@ -102,7 +102,7 @@ class CollectionController extends AbstractController{
 
 
     #[Route('/collection', methods: 'PUT')]
-    //#[IsGranted("USER_ADMIN")]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function updateCollection(Request $request): JsonResponse {
 
         $data = json_decode($request->getContent(), true);
@@ -141,6 +141,7 @@ class CollectionController extends AbstractController{
     }
 
     #[Route('/collection/{id}', methods: 'GET')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
     //get Priklady by studentId
     public function getCollection($id): JsonResponse {
         $encoders = [new JsonEncoder()];
@@ -168,7 +169,7 @@ class CollectionController extends AbstractController{
     }
 
     #[Route('/collection/student/{id}', methods: 'GET')]
-    //get Priklady by studentId
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function getCollectionByStudent($id): JsonResponse {
         $encoders = [new JsonEncoder()];
         $normalizers = [new ObjectNormalizer()];

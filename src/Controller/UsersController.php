@@ -46,7 +46,7 @@ class UsersController extends AbstractController
     }
 
     #[Route('/users', methods: ['GET'])]
-    //#[IsGranted("IS_AUTHENTICATED_FULLY")]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function index(): JsonResponse
     {
         $users = $this->userRepository->findAll();
