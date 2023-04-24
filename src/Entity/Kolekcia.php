@@ -7,12 +7,13 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use PhpParser\Node\Expr\Cast\Double;
 
 #[ORM\Entity(repositoryClass: KolekciaRepository::class)]
 class Kolekcia
 {
     #[ORM\Column(nullable: true)]
-    private ?float $maxPoints = null;
+    private ?double $maxPoints = null;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
