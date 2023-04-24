@@ -12,7 +12,7 @@ use Doctrine\Common\Collections\Collection;
 class Kolekcia
 {
     #[ORM\Column(nullable: true)]
-    private ?int $maxPoints = null;
+    private ?float $maxPoints = null;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -31,58 +31,6 @@ class Kolekcia
     #[ORM\Column(nullable: true)]
     private ?int $teacher = null;
 
-
-    public function getUsers(): Collection
-    {
-        return $this->users;
-    }
-
-    public function addUser(User $user): self
-    {
-        if (!$this->users->contains($user)) {
-            $this->users[] = $user;
-        }
-
-        return $this;
-    }
-
-    public function removeUser(User $user): self
-    {
-        if ($this->users->removeElement($user)) {
-            $user->removeKolekcia($this);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection
-     */
-    public function getPriklady(): Collection
-    {
-        return $this->priklady;
-    }
-
-    public function addPriklad(Priklad $priklad): self
-    {
-        if (!$this->priklady->contains($priklad)) {
-            $this->priklady[] = $priklad;
-            $priklad->setKolekcia($this);
-        }
-
-        return $this;
-    }
-
-    public function removePriklad(Priklad $priklad): self
-    {
-        if ($this->priklady->removeElement($priklad)) {
-            if ($priklad->getKolekcia() === $this) {
-                $priklad->setKolekcia(null);
-            }
-        }
-
-        return $this;
-    }
 
     public function getId(): ?int
     {
