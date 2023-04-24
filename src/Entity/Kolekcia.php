@@ -3,17 +3,13 @@
 namespace App\Entity;
 
 use App\Repository\KolekciaRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\Collection;
-use PhpParser\Node\Expr\Cast\Double;
 
 #[ORM\Entity(repositoryClass: KolekciaRepository::class)]
 class Kolekcia
 {
     #[ORM\Column(nullable: true)]
-    private ?double $maxPoints = null;
+    private ?int $maxPoints = null;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

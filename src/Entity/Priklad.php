@@ -33,7 +33,7 @@ class Priklad
     private ?string $name = null;
 
     #[ORM\Column(nullable: true)]
-    private ?int $maxPoints = null;
+    private ?float $maxPoints = null;
 
     #[ORM\Column(nullable: true)]
     private ?int $gainedPoints = null;
