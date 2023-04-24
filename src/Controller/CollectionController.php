@@ -75,7 +75,7 @@ class CollectionController extends AbstractController{
             }
 
             $foundPriklad = $this->prikladRepository->findOneBy(['prikladId' => $item['id']]);
-            if ($foundPriklad) {
+            if ($foundPriklad || isset($item['prikladId'])){
                 continue;
             }
 
