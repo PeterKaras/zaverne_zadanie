@@ -209,7 +209,6 @@ class CollectionController extends AbstractController{
                 'isSubmitted' => $priklad->isIsSubmitted(),
                 'isCorrect' => $priklad->isIsCorrect(),
                 'solution' => $priklad->getSolution(),
-                'result' => $priklad->getResult(),
                 'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
                 "CollectionId" => $priklad->getCollectionId(),
             ];
