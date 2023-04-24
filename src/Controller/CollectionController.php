@@ -188,6 +188,7 @@ class CollectionController extends AbstractController{
 
         return new JsonResponse($data, Response::HTTP_OK);
     }
+    
 
     #[Route('/collection/student/{id}', methods: 'GET')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
@@ -211,6 +212,8 @@ class CollectionController extends AbstractController{
                 'isSubmitted' => $priklad->isIsSubmitted(),
                 'isCorrect' => $priklad->isIsCorrect(),
                 'solution' => $priklad->getSolution(),
+                'results' => $priklad->getResult(),
+                'points' => $priklad->getGainedPoints(),
                 'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
                 "CollectionId" => $priklad->getCollectionId(),
             ];
