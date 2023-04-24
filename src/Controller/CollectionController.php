@@ -135,11 +135,16 @@ class CollectionController extends AbstractController{
         foreach ($data["students"] as $student){
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
             foreach ($foundPriklady as $priklady){
-                $foundStudent->setPriklady((array)$priklady->getId());
+                $existingPriklady = $foundStudent->getPriklady();
+                $existingPriklady[] = $priklady->getId();
+                $existingPriklady = array_unique($existingPriklady);
+                $foundStudent->setPriklady($existingPriklady);
+
                 $existingStudents = $priklady->getStudent();
                 $existingStudents[] = $foundStudent->getId();
                 $existingStudents = array_unique($existingStudents);
                 $priklady->setStudent($existingStudents);
+
                 $priklady->setMaxPoints($data["maxPoints"]/count($foundPriklady));
                 $foundCollection->setStudent($existingStudents);
                 $this->kolekciaRepository->save($foundCollection,true);

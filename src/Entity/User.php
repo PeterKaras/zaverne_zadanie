@@ -53,7 +53,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function setPriklady(array $priklady): void
     {
-        $this->priklady[] = $priklady;
+        $this->priklady = $priklady;
     }
 
     /**
