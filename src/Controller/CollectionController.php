@@ -237,6 +237,7 @@ class CollectionController extends AbstractController{
                 $data[] = [
                     'id' => $priklad->getId(),
                     'prikladId' => $priklad->getPrikladId(),
+                    'name' => $priklad->getName(),
                     'data' => $priklad->getData(),
                     'image' => $priklad->getImage(),
                     'maxPoints' => $priklad->getMaxPoints(),
