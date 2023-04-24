@@ -222,24 +222,31 @@ class CollectionController extends AbstractController{
         $serializer = new Serializer($normalizers, $encoders);
 
         $teacher = $this->userRepository->findOneBy(["id" => $id]);
+        if(!$teacher){
+            return new JsonResponse([], Response::HTTP_OK);
+        }
         $data = [];
-        $collection = $this->kolekciaRepository->findOneBy(["teacher" => $teacher->getId()]);
-        $priklady = $this->prikladRepository->findBy(["name" => $collection->getNameOfBlock()]);
-
-        foreach ($priklady as $priklad){
-            $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
-            $data[] = [
-                'id' => $priklad->getId(),
-                'prikladId' => $priklad->getPrikladId(),
-                'data' => $priklad->getData(),
-                'image' => $priklad->getImage(),
-                'maxPoints' => $priklad->getMaxPoints(),
-                'isSubmitted' => $priklad->isIsSubmitted(),
-                'isCorrect' => $priklad->isIsCorrect(),
-                'solution' => $priklad->getSolution(),
-                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
-                "CollectionId" => $priklad->getCollectionId(),
-            ];
+        $collection = $this->kolekciaRepository->findBy(["teacher" => $teacher->getId()]);
+        if(!$collection){
+            return new JsonResponse($data, Response::HTTP_OK);
+        }
+        for($i = 0; $i < count($collection); $i++){
+            $priklady = $this->prikladRepository->findBy(["name" => $collection[$i]->getNameOfBlock()]);
+            foreach ($priklady as $priklad){
+                $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
+                $data[] = [
+                    'id' => $priklad->getId(),
+                    'prikladId' => $priklad->getPrikladId(),
+                    'data' => $priklad->getData(),
+                    'image' => $priklad->getImage(),
+                    'maxPoints' => $priklad->getMaxPoints(),
+                    'isSubmitted' => $priklad->isIsSubmitted(),
+                    'isCorrect' => $priklad->isIsCorrect(),
+                    'solution' => $priklad->getSolution(),
+                    'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
+                    "CollectionId" => $priklad->getCollectionId(),
+                ];
+            }
         }
         return new JsonResponse($data, Response::HTTP_OK);
     }
