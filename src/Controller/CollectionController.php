@@ -128,6 +128,9 @@ class CollectionController extends AbstractController{
         $this->kolekciaRepository->save($foundCollection,true);
 
         $foundPriklady = $this->prikladRepository->findBy(["name" => $data["name"]]);
+        if(!$foundPriklady){
+            throw $this->createNotFoundException('Priklady were not found!');
+        }
 
         foreach ($data["students"] as $student){
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
@@ -166,8 +169,12 @@ class CollectionController extends AbstractController{
         $normalizers = [new ObjectNormalizer()];
         $serializer = new Serializer($normalizers, $encoders);
 
-        $priklady = $this->prikladRepository->findBy(["collectionId" => $id]);
         $data = [];
+        $priklady = $this->prikladRepository->findBy(["collectionId" => $id]);
+        if(!$priklady){
+            return new JsonResponse($data, Response::HTTP_OK);
+        }
+
         foreach ($priklady as $priklad){
             $data[] = [
                 'id' => $priklad->getId(),
@@ -193,9 +200,11 @@ class CollectionController extends AbstractController{
         $normalizers = [new ObjectNormalizer()];
         $serializer = new Serializer($normalizers, $encoders);
 
-        $student = $this->userRepository->findOneBy(["id" => $id]);
         $data = [];
-
+        $student = $this->userRepository->findOneBy(["id" => $id]);
+        if(!$student){
+            return new JsonResponse($data, Response::HTTP_OK);
+        }
 
         foreach ($student->getPriklady() as $priklad){
             $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
