@@ -3,21 +3,32 @@
 namespace App\Controller;
 use App\Entity\Kolekcia;
 use App\Entity\Priklad;
+use App\Entity\PrikladUserRelation;
 use App\Repository\KolekciaRepository;
 use App\Repository\PrikladRepository;
+use App\Repository\PrikladUserRelationRepository;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManager;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ObjectManager;
+use Exception;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 #[Route('/api')]
 class CollectionController extends AbstractController{
-    public function __construct(private UserRepository $userRepository,
-                                private KolekciaRepository $kolekciaRepository,
-                                private PrikladRepository $prikladRepository){}
+
+    public function __construct(
+        private UserRepository $userRepository,
+        private KolekciaRepository $kolekciaRepository,
+        private PrikladRepository $prikladRepository){}
 
     #[Route('/collection', methods: 'GET')]
     public function getAll(){
@@ -42,27 +53,30 @@ class CollectionController extends AbstractController{
     }
 
     #[Route('/collection', methods: 'POST')]
-    //#[IsGranted("teacher")]
-    public function createCollection(Request $request): JsonResponse {
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
+    public function createCollection(Request $request, ManagerRegistry $managerRegistry): JsonResponse {
 
         // Clear the database table
-        $em = $this->getDoctrine()->getManager();
-        //$em->createQuery('DELETE FROM App\Entity\Kolekcia')->execute();
-        //$em->createQuery('DELETE FROM App\Entity\Priklad')->execute();
+        $em = $managerRegistry->getManager();
 
         $data = json_decode($request->getContent(), true);
         $createdCollections = [];
 
         // Iterate through the data array and create a new record in the database for each item
-        foreach ($data as $item) {
-            $kolekcia = $this->kolekciaRepository->findOneBy(['nameOfBlock' => $item['name']]);
+        foreach ($data["mathProblems"] as $item) {
+            $kolekcia = $this->kolekciaRepository->findOneBy([
+                'name' => $item['name'],
+                'teacher' => $data["teacherId"]
+            ]);
 
             if (!$kolekcia) {
                 $kolekcia = new Kolekcia();
                 $kolekcia->setNameOfBlock($item['name']);
+                $kolekcia->setTeacher($data["teacherId"]);
+                $this->kolekciaRepository->save($kolekcia,true);
             }
 
-            $foundPriklad = $this->prikladRepository->findBy(['collectionId' => $item['id']]);
+            $foundPriklad = $this->prikladRepository->findOneBy(['prikladId' => $item['id']]);
             if ($foundPriklad) {
                 continue;
             }
@@ -71,11 +85,14 @@ class CollectionController extends AbstractController{
             $priklad->setData($item['data']);
             $priklad->setImage($item['image']);
             $priklad->setSolution($item['solution']);
-            $priklad->setCollectionId($item['id']);
-            $kolekcia->addPriklad($priklad);
-            $em->persist($kolekcia);
-            $em->persist($priklad);
-            $em->flush();
+            $priklad->setPrikladId($item['id']);
+            $priklad->setName($item['name']);
+            $priklad->setCollectionId($kolekcia->getId());
+
+            $this->prikladRepository->save($priklad,true);
+            $encoders = [new JsonEncoder()];
+            $normalizers = [new ObjectNormalizer()];
+            $serializer = new Serializer($normalizers, $encoders);
 
             $createdCollections[] = [
                 'id' => $priklad->getId(),
@@ -91,15 +108,11 @@ class CollectionController extends AbstractController{
             ];
         }
 
-        $response = new JsonResponse([
+        return new JsonResponse([
             'message' => 'Collections and Priklady created successfully',
             'priklady' => $createdCollections,
-        ]);
-        $response->setStatusCode(Response::HTTP_CREATED);
-
-        return $response;
+        ], Response::HTTP_CREATED);
     }
-
 
     #[Route('/collection', methods: 'PUT')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
@@ -120,19 +133,27 @@ class CollectionController extends AbstractController{
 
         foreach ($data["students"] as $student){
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
-            $foundCollection->addUser($foundStudent);
+            foreach ($foundPriklady as $priklady){
+                $foundStudent->setPriklady((array)$priklady->getId());
+                $students = $priklady->getStudent();
+                $students[] = $foundStudent->getId();
+                $priklady->setStudent($students);
+                $priklady->setMaxPoints($data["maxPoints"]/count($foundPriklady));
+                $this->prikladRepository->save($priklady,true);
+            }
+            $foundStudent->setTeacher($data["teacherId"]);
+            $this->userRepository->save($foundStudent,true);
         }
 
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($foundCollection);
-        $em->flush();
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
 
         $response = new JsonResponse([
             'id' => $foundCollection->getId(),
             'name' => $foundCollection->getNameOfBlock(),
             'dateToOpen' => $foundCollection->getDateToOpen(),
             'maxPoints' => $foundCollection->getMaxPoints(),
-            'students' => $foundCollection->getUsers(),
             'message' => 'Collection was updated successfully!'
         ]);
         $response->setStatusCode(Response::HTTP_CREATED);
