@@ -3,10 +3,8 @@
 namespace App\Controller;
 use App\Entity\Kolekcia;
 use App\Entity\Priklad;
-use App\Entity\PrikladUserRelation;
 use App\Repository\KolekciaRepository;
 use App\Repository\PrikladRepository;
-use App\Repository\PrikladUserRelationRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManager;
 use Doctrine\Persistence\ManagerRegistry;
@@ -199,6 +197,36 @@ class CollectionController extends AbstractController{
 
 
         foreach ($student->getPriklady() as $priklad){
+            $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
+            $data[] = [
+                'id' => $priklad->getId(),
+                'prikladId' => $priklad->getPrikladId(),
+                'data' => $priklad->getData(),
+                'image' => $priklad->getImage(),
+                'maxPoints' => $priklad->getMaxPoints(),
+                'isSubmitted' => $priklad->isIsSubmitted(),
+                'isCorrect' => $priklad->isIsCorrect(),
+                'solution' => $priklad->getSolution(),
+                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
+                "CollectionId" => $priklad->getCollectionId(),
+            ];
+        }
+        return new JsonResponse($data, Response::HTTP_OK);
+    }
+
+    #[Route('/collection/teacher/{id}', methods: 'GET')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
+    public function getCollectionByTeacher($id): JsonResponse {
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
+
+        $teacher = $this->userRepository->findOneBy(["id" => $id]);
+        $data = [];
+        $collection = $this->kolekciaRepository->findOneBy(["teacher" => $teacher->getId()]);
+        $priklady = $this->prikladRepository->findBy(["name" => $collection->getNameOfBlock()]);
+
+        foreach ($priklady as $priklad){
             $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
             $data[] = [
                 'id' => $priklad->getId(),
