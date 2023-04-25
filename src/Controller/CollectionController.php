@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+
 use App\Entity\Kolekcia;
 use App\Entity\Priklad;
 use App\Repository\KolekciaRepository;
@@ -21,22 +22,26 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
 #[Route('/api')]
-class CollectionController extends AbstractController{
+class CollectionController extends AbstractController
+{
 
     public function __construct(
         private UserRepository $userRepository,
         private KolekciaRepository $kolekciaRepository,
-        private PrikladRepository $prikladRepository){}
+        private PrikladRepository $prikladRepository
+    ) {
+    }
 
     #[Route('/collection', methods: 'GET')]
-    public function getAll(){
+    public function getAll()
+    {
         $encoders = [new JsonEncoder()];
         $normalizers = [new ObjectNormalizer()];
         $serializer = new Serializer($normalizers, $encoders);
 
         $kolekcias = $this->kolekciaRepository->findAll();
         $data = [];
-        foreach ($kolekcias as $kolekcia){
+        foreach ($kolekcias as $kolekcia) {
             $data[] = [
                 'id' => $kolekcia->getId(),
                 'name' => $kolekcia->getNameOfBlock(),
@@ -52,7 +57,8 @@ class CollectionController extends AbstractController{
 
     #[Route('/collection', methods: 'POST')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function createCollection(Request $request, ManagerRegistry $managerRegistry): JsonResponse {
+    public function createCollection(Request $request, ManagerRegistry $managerRegistry): JsonResponse
+    {
 
         // Clear the database table
         $em = $managerRegistry->getManager();
@@ -71,11 +77,11 @@ class CollectionController extends AbstractController{
                 $kolekcia = new Kolekcia();
                 $kolekcia->setNameOfBlock($item['name']);
                 $kolekcia->setTeacher($data["teacherId"]);
-                $this->kolekciaRepository->save($kolekcia,true);
+                $this->kolekciaRepository->save($kolekcia, true);
             }
 
             $foundPriklad = $this->prikladRepository->findOneBy(['prikladId' => $item['id']]);
-            if ($foundPriklad || isset($item['prikladId'])){
+            if ($foundPriklad || isset($item['prikladId'])) {
                 continue;
             }
 
@@ -87,7 +93,7 @@ class CollectionController extends AbstractController{
             $priklad->setName($item['name']);
             $priklad->setCollectionId($kolekcia->getId());
 
-            $this->prikladRepository->save($priklad,true);
+            $this->prikladRepository->save($priklad, true);
             $encoders = [new JsonEncoder()];
             $normalizers = [new ObjectNormalizer()];
             $serializer = new Serializer($normalizers, $encoders);
@@ -114,7 +120,8 @@ class CollectionController extends AbstractController{
 
     #[Route('/collection', methods: 'PUT')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function updateCollection(Request $request): JsonResponse {
+    public function updateCollection(Request $request): JsonResponse
+    {
 
         $data = json_decode($request->getContent(), true);
 
@@ -125,16 +132,16 @@ class CollectionController extends AbstractController{
 
         $foundCollection->setDateToOpen($data["dateToOpen"]);
         $foundCollection->setMaxPoints($data["maxPoints"]);
-        $this->kolekciaRepository->save($foundCollection,true);
+        $this->kolekciaRepository->save($foundCollection, true);
 
         $foundPriklady = $this->prikladRepository->findBy(["name" => $data["name"]]);
-        if(!$foundPriklady){
+        if (!$foundPriklady) {
             throw $this->createNotFoundException('Priklady were not found!');
         }
 
-        foreach ($data["students"] as $student){
+        foreach ($data["students"] as $student) {
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
-            foreach ($foundPriklady as $priklady){
+            foreach ($foundPriklady as $priklady) {
                 $existingPriklady = $foundStudent->getPriklady();
                 $existingPriklady[] = $priklady->getId();
                 $existingPriklady = array_unique($existingPriklady);
@@ -145,13 +152,13 @@ class CollectionController extends AbstractController{
                 $existingStudents = array_unique($existingStudents);
                 $priklady->setStudent($existingStudents);
 
-                $priklady->setMaxPoints($data["maxPoints"]/count($foundPriklady));
+                $priklady->setMaxPoints($data["maxPoints"] / count($foundPriklady));
                 $foundCollection->setStudent($existingStudents);
-                $this->kolekciaRepository->save($foundCollection,true);
-                $this->prikladRepository->save($priklady,true);
+                $this->kolekciaRepository->save($foundCollection, true);
+                $this->prikladRepository->save($priklady, true);
             }
             $foundStudent->setTeacher($data["teacherId"]);
-            $this->userRepository->save($foundStudent,true);
+            $this->userRepository->save($foundStudent, true);
         }
 
         $response = new JsonResponse([
@@ -169,18 +176,19 @@ class CollectionController extends AbstractController{
     #[Route('/collection/{id}', methods: 'GET')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
     //get Priklady by studentId
-    public function getCollection($id): JsonResponse {
+    public function getCollection($id): JsonResponse
+    {
         $encoders = [new JsonEncoder()];
         $normalizers = [new ObjectNormalizer()];
         $serializer = new Serializer($normalizers, $encoders);
 
         $data = [];
         $priklady = $this->prikladRepository->findBy(["collectionId" => $id]);
-        if(!$priklady){
+        if (!$priklady) {
             return new JsonResponse($data, Response::HTTP_OK);
         }
 
-        foreach ($priklady as $priklad){
+        foreach ($priklady as $priklad) {
             $data[] = [
                 'id' => $priklad->getId(),
                 'prikladId' => $priklad->getPrikladId(),
@@ -190,7 +198,7 @@ class CollectionController extends AbstractController{
                 'isSubmitted' => $priklad->isIsSubmitted(),
                 'isCorrect' => $priklad->isIsCorrect(),
                 'solution' => $priklad->getSolution(),
-                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
+                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'), true),
                 "CollectionId" => $priklad->getCollectionId(),
             ];
         }
@@ -200,20 +208,21 @@ class CollectionController extends AbstractController{
 
     #[Route('/collection/student/{id}', methods: 'GET')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function getCollectionByStudent($id): JsonResponse {
+    public function getCollectionByStudent($id): JsonResponse
+    {
         $encoders = [new JsonEncoder()];
         $normalizers = [new ObjectNormalizer()];
         $serializer = new Serializer($normalizers, $encoders);
 
         $data = [];
         $student = $this->userRepository->findOneBy(["id" => $id]);
-        if(!$student){
+        if (!$student) {
             return new JsonResponse($data, Response::HTTP_OK);
         }
 
-        foreach ($student->getPriklady() as $priklad){
+        foreach ($student->getPriklady() as $priklad) {
             $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
-            if(!$priklad){
+            if (!$priklad) {
                 return new JsonResponse($data, Response::HTTP_OK);
             }
             $data[] = [
@@ -225,7 +234,7 @@ class CollectionController extends AbstractController{
                 'isSubmitted' => $priklad->isIsSubmitted(),
                 'isCorrect' => $priklad->isIsCorrect(),
                 'solution' => $priklad->getSolution(),
-                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
+                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'), true),
                 "CollectionId" => $priklad->getCollectionId(),
             ];
         }
@@ -234,23 +243,24 @@ class CollectionController extends AbstractController{
 
     #[Route('/collection/teacher/{id}', methods: 'GET')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function getCollectionByTeacher($id): JsonResponse {
+    public function getCollectionByTeacher($id): JsonResponse
+    {
         $encoders = [new JsonEncoder()];
         $normalizers = [new ObjectNormalizer()];
         $serializer = new Serializer($normalizers, $encoders);
 
         $teacher = $this->userRepository->findOneBy(["id" => $id]);
-        if(!$teacher){
+        if (!$teacher) {
             return new JsonResponse([], Response::HTTP_OK);
         }
         $data = [];
         $collection = $this->kolekciaRepository->findBy(["teacher" => $teacher->getId()]);
-        if(!$collection){
+        if (!$collection) {
             return new JsonResponse($data, Response::HTTP_OK);
         }
-        for($i = 0; $i < count($collection); $i++){
+        for ($i = 0; $i < count($collection); $i++) {
             $priklady = $this->prikladRepository->findBy(["name" => $collection[$i]->getNameOfBlock()]);
-            foreach ($priklady as $priklad){
+            foreach ($priklady as $priklad) {
                 $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
                 $data[] = [
                     'id' => $priklad->getId(),
@@ -262,11 +272,44 @@ class CollectionController extends AbstractController{
                     'isSubmitted' => $priklad->isIsSubmitted(),
                     'isCorrect' => $priklad->isIsCorrect(),
                     'solution' => $priklad->getSolution(),
-                    'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'),true),
+                    'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'), true),
                     "CollectionId" => $priklad->getCollectionId(),
                 ];
             }
         }
+        return new JsonResponse($data, Response::HTTP_OK);
+    }
+
+    #[Route('/generateExample', methods: 'GET')]
+    public function generateExample()
+    {
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
+
+        $priklady = $this->prikladRepository->findAll();
+
+        if (!$priklady) {
+            return new JsonResponse([], Response::HTTP_OK);
+        }
+
+        $randomIndex = rand(0, count($priklady) - 1);
+        $randomPriklad = $priklady[$randomIndex];
+
+        $data = [
+            'id' => $randomPriklad->getId(),
+            'prikladId' => $randomPriklad->getPrikladId(),
+            'name' => $randomPriklad->getName(),
+            'data' => $randomPriklad->getData(),
+            'image' => $randomPriklad->getImage(),
+            'maxPoints' => $randomPriklad->getMaxPoints(),
+            'isSubmitted' => $randomPriklad->isIsSubmitted(),
+            'isCorrect' => $randomPriklad->isIsCorrect(),
+            'solution' => $randomPriklad->getSolution(),
+            'students' => json_decode($serializer->serialize($randomPriklad->getStudent(), 'json'), true),
+            "CollectionId" => $randomPriklad->getCollectionId(),
+        ];
+
         return new JsonResponse($data, Response::HTTP_OK);
     }
 }
