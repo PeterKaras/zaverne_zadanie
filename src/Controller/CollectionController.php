@@ -219,7 +219,6 @@ class CollectionController extends AbstractController{
             $data[] = [
                 'id' => $priklad->getId(),
                 'prikladId' => $priklad->getPrikladId(),
-                'name' => $priklad->getName(),
                 'data' => $priklad->getData(),
                 'image' => $priklad->getImage(),
                 'maxPoints' => $priklad->getMaxPoints(),
@@ -270,41 +269,4 @@ class CollectionController extends AbstractController{
         }
         return new JsonResponse($data, Response::HTTP_OK);
     }
-
-    #[Route('/submit', methods: 'POST')]
-    #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function submit(Request $request): JsonResponse {
-        $data = json_decode($request->getContent(), true);
-
-        $foundPriklad = $this->prikladRepository->findOneBy(["id" => $data["id"]]);
-        if(!$foundPriklad){
-            return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
-        }
-        foreach ($foundPriklad["student"] as $student){
-            if($student->getId() == $data["studentId"]){
-                $foundPriklad->setIsSubmitted(true);
-                $foundPriklad->setSolution($data["solution"]);
-                $this->prikladRepository->save($foundPriklad,true);
-                break;
-            }
-        }
-
-        $response = new JsonResponse([
-            'id' => $foundPriklad->getId(),
-            'prikladId' => $foundPriklad->getPrikladId(),
-            'data' => $foundPriklad->getData(),
-            'image' => $foundPriklad->getImage(),
-            'maxPoints' => $foundPriklad->getMaxPoints(),
-            'isSubmitted' => $foundPriklad->isIsSubmitted(),
-            'isCorrect' => $foundPriklad->isIsCorrect(),
-            'solution' => $foundPriklad->getSolution(),
-            'students' => $foundPriklad->getStudent(),
-            "CollectionId" => $foundPriklad->getCollectionId(),
-            'message' => 'Priklad was updated successfully!'
-        ]);
-        $response->setStatusCode(Response::HTTP_CREATED);
-
-        return $response;
-    }
-
 }
