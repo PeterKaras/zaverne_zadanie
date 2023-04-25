@@ -269,4 +269,74 @@ class CollectionController extends AbstractController{
         }
         return new JsonResponse($data, Response::HTTP_OK);
     }
+
+    #[Route('/generateExample', methods: 'GET')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
+    public function generateExample()
+    {
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
+
+        $priklady = $this->prikladRepository->findAll();
+
+        if (!$priklady) {
+            return new JsonResponse([], Response::HTTP_OK);
+        }
+
+        $randomIndex = rand(0, count($priklady) - 1);
+        $randomPriklad = $priklady[$randomIndex];
+
+        $data = [
+            'id' => $randomPriklad->getId(),
+            'prikladId' => $randomPriklad->getPrikladId(),
+            'name' => $randomPriklad->getName(),
+            'data' => $randomPriklad->getData(),
+            'image' => $randomPriklad->getImage(),
+            'maxPoints' => $randomPriklad->getMaxPoints(),
+            'isSubmitted' => $randomPriklad->isIsSubmitted(),
+            'isCorrect' => $randomPriklad->isIsCorrect(),
+            'solution' => $randomPriklad->getSolution(),
+            'students' => json_decode($serializer->serialize($randomPriklad->getStudent(), 'json'), true),
+            "CollectionId" => $randomPriklad->getCollectionId(),
+        ];
+
+        return new JsonResponse($data, Response::HTTP_OK);
+    }
+
+    #[Route('/submit', methods: 'POST')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
+    public function submit(Request $request): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        $foundPriklad = $this->prikladRepository->findOneBy(["id" => $data["id"]]);
+        if(!$foundPriklad){
+            return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
+        }
+        foreach ($foundPriklad["student"] as $student){
+            if($student->getId() == $data["studentId"]){
+                $foundPriklad->setIsSubmitted(true);
+                $foundPriklad->setSolution($data["solution"]);
+                $this->prikladRepository->save($foundPriklad,true);
+                break;
+            }
+        }
+
+        $response = new JsonResponse([
+            'id' => $foundPriklad->getId(),
+            'prikladId' => $foundPriklad->getPrikladId(),
+            'data' => $foundPriklad->getData(),
+            'image' => $foundPriklad->getImage(),
+            'maxPoints' => $foundPriklad->getMaxPoints(),
+            'isSubmitted' => $foundPriklad->isIsSubmitted(),
+            'isCorrect' => $foundPriklad->isIsCorrect(),
+            'solution' => $foundPriklad->getSolution(),
+            'students' => $foundPriklad->getStudent(),
+            "CollectionId" => $foundPriklad->getCollectionId(),
+            'message' => 'Priklad was updated successfully!'
+        ]);
+        $response->setStatusCode(Response::HTTP_CREATED);
+
+        return $response;
+    }
 }
