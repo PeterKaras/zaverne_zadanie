@@ -1,0 +1,28 @@
+version: '3.1'
+
+services:
+
+  database:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+    volumes:
+      - db:/var/lib/mysql
+
+
+  frontend:
+    #image: {your image}
+    ports:
+      - 80:80
+    restart: always # -> do FE nastaviť ako host "backend"
+
+  backend:
+    image: ghcr.io/peterkaras/zaverne_zadanie:latest
+    restart: always
+    environment:
+      DATABASE_URL: "mysql://user:pass@database:3306/app?serverVersion=8.0&charset=utf8mb4"
+
+volumes:
+  db:

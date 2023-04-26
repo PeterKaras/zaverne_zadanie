@@ -19,7 +19,7 @@ RUN install-php-extensions ${extensions}
 COPY composer.json /var/www/html
 COPY composer.lock /var/www/html
 COPY bin/console /var/www/html
-RUN composer install --no-dev --no-interaction --no-plugins --no-progress --no-scripts --optimize-autoloader
+RUN composer install
 
 COPY . /var/www/html
 
