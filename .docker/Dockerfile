@@ -8,7 +8,7 @@ RUN sed -ri -e 's!AllowOverride None!AllowOverride All!g' /etc/apache2/apache2.c
 RUN a2enmod rewrite
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 RUN apt-get update && apt-get install -y nano apt-utils zip unzip
 
@@ -19,7 +19,7 @@ RUN install-php-extensions ${extensions}
 COPY composer.json /var/www/html
 COPY composer.lock /var/www/html
 COPY bin/console /var/www/html
-RUN composer install
+RUN composer install --ignore-platform-reqs --no-scripts
 
 COPY . /var/www/html
 
