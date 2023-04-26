@@ -40,7 +40,7 @@ jobs:
           context: .
           file: .docker/Dockerfile
           # Note: tags has to be all lower-case
-          tags: ghcr.io/PeterKaras/zaverne_zadanie
+          tags: ghcr.io/peterkaras/zaverne_zadanie
           # build on feature branches, push only on main branch
           push: true
 
