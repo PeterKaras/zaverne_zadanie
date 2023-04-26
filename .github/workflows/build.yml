@@ -1,0 +1,52 @@
+name: Build and Publish
+
+on:
+  # run it on push to the default repository branch
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  # define job to build and publish docker image
+  build-and-push-docker-image:
+    name: Build Docker image and push to repositories
+    # run only when code is compiling and tests are passing
+    runs-on: ubuntu-latest
+
+    # steps to perform in job
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image and push to Docker Hub and GitHub Container Registry
+        uses: docker/build-push-action@v3
+        with:
+          # relative path to the place where source code with Dockerfile is located
+          context: .
+          file: .docker/Dockerfile
+          # Note: tags has to be all lower-case
+          tags: ghcr.io/PeterKaras/zaverne_zadanie
+          # build on feature branches, push only on main branch
+          push: true
+
+      - name: Image digest
+        run: |
+          echo ${{ steps.docker_build.outputs.imageid }}
+          echo ${{ steps.docker_build.outputs.digest }}
+          echo ${{ steps.docker_build.outputs.metadata }}
