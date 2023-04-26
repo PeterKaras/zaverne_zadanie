@@ -4,8 +4,7 @@ on:
   # run it on push to the default repository branch
   workflow_dispatch:
   push:
-    branches:
-      - main
+
 
 jobs:
   # define job to build and publish docker image
