@@ -222,6 +222,8 @@ class CollectionController extends AbstractController
 
         foreach ($student->getPriklady() as $priklad) {
             $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
+            $collection = $this->kolekciaRepository->findOneBy(["id" => $priklad->getCollectionId()]);
+
             if (!$priklad) {
                 return new JsonResponse($data, Response::HTTP_OK);
             }
@@ -231,6 +233,7 @@ class CollectionController extends AbstractController
                 'data' => $priklad->getData(),
                 'name' => $priklad->getName(),
                 'image' => $priklad->getImage(),
+                'dateToOpen' => $collection->getDateToOpen(),
                 'maxPoints' => $priklad->getMaxPoints(),
                 'isSubmitted' => $priklad->isIsSubmitted(),
                 'isCorrect' => $priklad->isIsCorrect(),
