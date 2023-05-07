@@ -24,6 +24,12 @@ class RegisterController extends AbstractController
     ) {
     }
 
+    #[Route('/health-check', methods: ['GET'])]
+    public function healthCheck(): JsonResponse
+    {
+        return new JsonResponse(["message"=>"OK", "code"=>Response::HTTP_OK], Response::HTTP_OK);
+    }
+
     #[Route('/api/auth/register', methods: ['POST'])]
     public function register(Request $request): JsonResponse
     {
