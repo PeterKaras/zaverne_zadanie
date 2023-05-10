@@ -323,12 +323,25 @@ class CollectionController extends AbstractController
     public function submit(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
+/*
         $foundPriklad = $this->prikladRepository->findOneBy(["id" => $data["id"]]);
         if (!$foundPriklad) {
             return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
         }
         foreach ($foundPriklad["student"] as $student) {
+            if ($student->getId() == $data["studentId"]) {
+                $foundPriklad->setIsSubmitted(true);
+                $foundPriklad->setSolution($data["solution"]);
+                $this->prikladRepository->save($foundPriklad, true);
+                break;
+            }
+        }
+*/
+        $foundPriklad = $this->prikladRepository->findOneBy(["id" => $data["id"]]);
+        if (!$foundPriklad) {
+            return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
+        }
+        foreach ($foundPriklad->getStudent() as $student) {
             if ($student->getId() == $data["studentId"]) {
                 $foundPriklad->setIsSubmitted(true);
                 $foundPriklad->setSolution($data["solution"]);
