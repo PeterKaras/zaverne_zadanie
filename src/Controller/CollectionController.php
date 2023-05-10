@@ -21,6 +21,21 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
+
+
+use MathPHP\Algebra;
+use MathPHP\ExpressionParser;
+use MathPHP\Algebra\Term;
+use MathPHP\Expression\Expression;
+
+use MathParser\StdMathParser;
+use MathParser\Interpreting\Evaluator;
+use MathParser;
+
+
+
+
+
 #[Route('/api')]
 class CollectionController extends AbstractController
 {
@@ -323,34 +338,63 @@ class CollectionController extends AbstractController
     public function submit(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-/*
-        $foundPriklad = $this->prikladRepository->findOneBy(["id" => $data["id"]]);
-        if (!$foundPriklad) {
-            return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
-        }
-        foreach ($foundPriklad["student"] as $student) {
-            if ($student->getId() == $data["studentId"]) {
-                $foundPriklad->setIsSubmitted(true);
-                $foundPriklad->setSolution($data["solution"]);
-                $this->prikladRepository->save($foundPriklad, true);
-                break;
-            }
-        }
-*/
-        $foundPriklad = $this->prikladRepository->findOneBy(["id" => $data["id"]]);
-        if (!$foundPriklad) {
-            return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
-        }
-        foreach ($foundPriklad->getStudent() as $student) {
-            if ($student->getId() == $data["studentId"]) {
-                $foundPriklad->setIsSubmitted(true);
-                $foundPriklad->setSolution($data["solution"]);
-                $this->prikladRepository->save($foundPriklad, true);
-                break;
-            }
-        }
 
+        $foundPriklad = $this->prikladRepository->findOneBy(["id" => $data["id"]]);
+        if (!$foundPriklad) {
+            return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
+        }
+/*
+        $expr1 = '\left[\frac{3}{2}-\frac{3}{2}e^{-\frac{2}{5}(t-4)}-\frac{3}{5}(t-4)e^{-\frac{2}{5}(t-4)}\right]\eta(t-4)';
+        $expr2 = '\left[ \dfrac{3}{2}-\dfrac{3}{2}e^{-\frac{2}{5}(t-4)}-\dfrac{3}{5}(t-4)e^{-\frac{2}{5}(t-4)} \right] \eta(t-4)';
+
+        $expr1 = preg_replace('/\s+/', '', $expr1);
+        $expr2 = preg_replace('/\s+/', '', $expr2);
+
+        $expr1 = str_replace('\frac', '', $expr1);
+        $expr2 = str_replace('\dfrac', '', $expr2);
+        $expr1 = str_replace('{', '', $expr1);
+        $expr2 = str_replace('{', '', $expr2);
+        $expr1 = str_replace('}', '', $expr1);
+        $expr2 = str_replace('}', '', $expr2);
+        $expr1 = str_replace('(', '', $expr1);
+        $expr2 = str_replace('(', '', $expr2);
+        $expr1 = str_replace(')', '', $expr1);
+        $expr2 = str_replace(')', '', $expr2);
+
+        
+        //$tolerance = 1e-6; // Small tolerance 
+        $result1 = eval("return $expr1;");
+        $result2 = eval("return $expr2;");
+        
+        if (abs($result1 - $result2) < $tolerance) {
+            echo "The two expressions are equal.\n";
+        } else {
+            echo "The two expressions are not equal.\n";
+        }*/
+        
+        foreach ($foundPriklad->getStudent() as $student) {
+            if ($student == $data["studentId"]) {
+                $foundPriklad->setIsSubmitted(true);
+                $foundPriklad->setResult($data["solution"]);
+
+                if($data["solution"] == $foundPriklad->getSolution()){
+                    $point = $foundPriklad->getMaxPoints();
+                    $foundPriklad->setGainedPoints($point);
+                    $foundPriklad->setIsCorrect(true);
+                }
+                else{
+                    $foundPriklad->setGainedPoints(0);
+                }
+                    
+                
+                
+                $this->prikladRepository->save($foundPriklad, true);
+                break;
+            }
+        }
+        
         $response = new JsonResponse([
+            
             'id' => $foundPriklad->getId(),
             'prikladId' => $foundPriklad->getPrikladId(),
             'data' => $foundPriklad->getData(),

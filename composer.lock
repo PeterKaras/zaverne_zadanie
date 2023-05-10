@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4b0e7c877e4b7f75cf793d2e7737eb02",
+    "content-hash": "3f25607839e912a5f95f6ae70fd6537d",
     "packages": [
         {
             "name": "api-platform/core",
@@ -1961,6 +1961,132 @@
                 }
             ],
             "time": "2023-02-13T12:30:12+00:00"
+        },
+        {
+            "name": "markrogoyski/math-php",
+            "version": "v2.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/markrogoyski/math-php.git",
+                "reference": "70d0111a0930338a60eed9cad23cf587a4806380"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/markrogoyski/math-php/zipball/70d0111a0930338a60eed9cad23cf587a4806380",
+                "reference": "70d0111a0930338a60eed9cad23cf587a4806380",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=7.2.0"
+            },
+            "require-dev": {
+                "php-coveralls/php-coveralls": "^2.0",
+                "php-parallel-lint/php-parallel-lint": "^1.2",
+                "phploc/phploc": "*",
+                "phpmd/phpmd": "^2.6",
+                "phpstan/phpstan": "*",
+                "phpunit/phpunit": "^8.5",
+                "squizlabs/php_codesniffer": "3.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MathPHP\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mark Rogoyski",
+                    "email": "mark@rogoyski.com",
+                    "homepage": "https://github.com/markrogoyski",
+                    "role": "Lead developer"
+                },
+                {
+                    "name": "Kevin Nowaczyk",
+                    "homepage": "https://github.com/Beakerboy",
+                    "role": "Developer"
+                },
+                {
+                    "name": "MathPHP Community of Contributors",
+                    "homepage": "https://github.com/markrogoyski/math-php/graphs/contributors"
+                }
+            ],
+            "description": "Math Library for PHP. Features descriptive statistics and regressions; Continuous and discrete probability distributions; Linear algebra with matrices and vectors, Numerical analysis; special mathematical functions; Algebra",
+            "homepage": "https://github.com/markrogoyski/math-php/",
+            "keywords": [
+                "algebra",
+                "combinatorics",
+                "distributions",
+                "linear algebra",
+                "math",
+                "mathematics",
+                "matrix",
+                "numerical analysis",
+                "probability",
+                "regressions",
+                "statistics"
+            ],
+            "support": {
+                "issues": "https://github.com/markrogoyski/math-php/issues",
+                "source": "https://github.com/markrogoyski/math-php/tree/v2.8.0"
+            },
+            "time": "2023-05-07T17:45:19+00:00"
+        },
+        {
+            "name": "mossadal/math-parser",
+            "version": "v1.3.16",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mossadal/math-parser.git",
+                "reference": "981b03ca603fd281049e092d75245ac029e13dec"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mossadal/math-parser/zipball/981b03ca603fd281049e092d75245ac029e13dec",
+                "reference": "981b03ca603fd281049e092d75245ac029e13dec",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "phpdocumentor/phpdocumentor": "2.*",
+                "phpunit/php-code-coverage": "6.0.*",
+                "phpunit/phpunit": "7.3.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MathParser\\": "src/MathParser"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Frank Wikström",
+                    "email": "frank@mossadal.se",
+                    "role": "Developer"
+                }
+            ],
+            "description": "PHP parser for mathematical expressions, including elementary functions, variables and implicit multiplication. Also supports symbolic differentiation.",
+            "homepage": "https://github.com/mossadal/math-parser",
+            "keywords": [
+                "mathematics",
+                "parser"
+            ],
+            "support": {
+                "issues": "https://github.com/mossadal/math-parser/issues",
+                "source": "https://github.com/mossadal/math-parser/tree/master"
+            },
+            "time": "2018-09-15T22:20:34+00:00"
         },
         {
             "name": "namshi/jose",
