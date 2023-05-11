@@ -60,6 +60,7 @@ class UsersController extends AbstractController
                 'name' => $user->getName(),
                 'surname' => $user->getSurname(),
                 'roles' => $user->getRoles(),
+                'priklady' => count($user->getPriklady()),
             ]);
         }
 

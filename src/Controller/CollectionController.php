@@ -412,13 +412,16 @@ class CollectionController extends AbstractController
 
 
         $foundPriklad->setIsSubmitted(true);
+        $foundPriklad->setIsCorrect(false);
+
         $foundPriklad->setResult($data["solution"]);
 
         $expr2 = $foundPriklad->getSolution();
 
+        
+
         $expr1 = preg_replace('/\s+/', '', $expr1);
         $expr2 = preg_replace('/\s+/', '', $expr2);
-
         $expr1 = str_replace('\frac', '', $expr1);
         $expr1 = str_replace('\\', '', $expr1);
         $expr2 = str_replace('\dfrac', '', $expr2);
@@ -431,19 +434,21 @@ class CollectionController extends AbstractController
         $expr2 = str_replace('(', '', $expr2);
         $expr1 = str_replace(')', '', $expr1);
         $expr2 = str_replace(')', '', $expr2);
-        $foundPriklad->setIsCorrect(false);
-        $foundPriklad->setIsSubmitted(true);
+        
 
-        /*if (strpos($expr2, "=") !== false) {
+        if (strpos($expr2, "=") !== false) {
             $parts = explode("=", $expr2);
 
 
             $y_t = $parts[0]; 
             $result1 = $parts[1]; 
-            $result2 = $parts[2]; 
-
-            $result2 = $y_t . '=' . $result2;
             $result1 = $y_t . '=' . $result1;
+
+            if (count($parts) >= 3) {
+                $result2 = $parts[2]; 
+                $result2 = $y_t . '=' . $result2;
+            }
+            
 
             if(($expr1 == $result1) || ($expr1== $result2) ){
                 $point = $foundPriklad->getMaxPoints();
@@ -464,10 +469,9 @@ class CollectionController extends AbstractController
         else{
             $foundPriklad->setGainedPoints(0);
             $foundPriklad->setIsCorrect(false);
-        }*/
-
-
-
+        }
+            
+        
         $this->prikladRepository->save($foundPriklad, true);
 
         $response = new JsonResponse([
