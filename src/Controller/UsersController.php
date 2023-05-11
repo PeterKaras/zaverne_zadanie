@@ -11,14 +11,17 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Response;
+use App\Repository\PrikladRepository;
 
 
 #[Route('/api')]
 class UsersController extends AbstractController
 {
 
-    public function __construct(private UserRepository $userRepository)
-    {
+    public function __construct(
+        private UserRepository $userRepository,
+        private PrikladRepository $prikladRepository
+        ){
     }
 
 
@@ -51,8 +54,29 @@ class UsersController extends AbstractController
     {
         $users = $this->userRepository->findAll();
         $data = [];
+        $submitted = 0;
+        $correct = 0;
+        $sum = 0;
 
         foreach ($users as $user) {
+
+            $priklady = $this->prikladRepository->findBy(["singleStudent" => $user->getId()]);
+            if (!$priklady) {
+                $submitted = 0;
+            }
+            else{
+
+                foreach($priklady as $priklad){
+                    if($priklad->isIsSubmitted()){
+                        $submitted +=1;
+                    }
+                    if($priklad->isIsCorrect()){
+                        $correct +=1;
+                        $sum += $priklad->getMaxPoints();
+                    }
+                }
+            }
+
             array_push($data, [
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
@@ -61,6 +85,9 @@ class UsersController extends AbstractController
                 'surname' => $user->getSurname(),
                 'roles' => $user->getRoles(),
                 'priklady' => count($user->getPriklady()),
+                'odovzdane' => $submitted,
+                'validne' => $correct,
+                'suma' => $sum
             ]);
         }
 
