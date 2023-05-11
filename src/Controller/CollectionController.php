@@ -343,47 +343,65 @@ class CollectionController extends AbstractController
         if (!$foundPriklad) {
             return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
         }
-/*
-        $expr1 = '\left[\frac{3}{2}-\frac{3}{2}e^{-\frac{2}{5}(t-4)}-\frac{3}{5}(t-4)e^{-\frac{2}{5}(t-4)}\right]\eta(t-4)';
-        $expr2 = '\left[ \dfrac{3}{2}-\dfrac{3}{2}e^{-\frac{2}{5}(t-4)}-\dfrac{3}{5}(t-4)e^{-\frac{2}{5}(t-4)} \right] \eta(t-4)';
-
-        $expr1 = preg_replace('/\s+/', '', $expr1);
-        $expr2 = preg_replace('/\s+/', '', $expr2);
-
-        $expr1 = str_replace('\frac', '', $expr1);
-        $expr2 = str_replace('\dfrac', '', $expr2);
-        $expr1 = str_replace('{', '', $expr1);
-        $expr2 = str_replace('{', '', $expr2);
-        $expr1 = str_replace('}', '', $expr1);
-        $expr2 = str_replace('}', '', $expr2);
-        $expr1 = str_replace('(', '', $expr1);
-        $expr2 = str_replace('(', '', $expr2);
-        $expr1 = str_replace(')', '', $expr1);
-        $expr2 = str_replace(')', '', $expr2);
-
         
-        //$tolerance = 1e-6; // Small tolerance 
-        $result1 = eval("return $expr1;");
-        $result2 = eval("return $expr2;");
-        
-        if (abs($result1 - $result2) < $tolerance) {
-            echo "The two expressions are equal.\n";
-        } else {
-            echo "The two expressions are not equal.\n";
-        }*/
+        $expr1 = $data["solution"];
+        $result1 =0;
+        $result2=0;
+        $expr2=0;
         
         foreach ($foundPriklad->getStudent() as $student) {
             if ($student == $data["studentId"]) {
+
                 $foundPriklad->setIsSubmitted(true);
                 $foundPriklad->setResult($data["solution"]);
 
-                if($data["solution"] == $foundPriklad->getSolution()){
+                $expr2 = $foundPriklad->getSolution();
+
+                $expr1 = preg_replace('/\s+/', '', $expr1);
+                $expr2 = preg_replace('/\s+/', '', $expr2);
+
+                $expr1 = str_replace('\frac', '', $expr1);
+                $expr1 = str_replace('\\','',$expr1);
+                $expr2 = str_replace('\dfrac', '', $expr2);
+                $expr2 = str_replace('\frac', '', $expr2);
+                $expr1 = str_replace('{', '', $expr1);
+                $expr2 = str_replace('{', '', $expr2);
+                $expr1 = str_replace('}', '', $expr1);
+                $expr2 = str_replace('}', '', $expr2);
+                $expr1 = str_replace('(', '', $expr1);
+                $expr2 = str_replace('(', '', $expr2);
+                $expr1 = str_replace(')', '', $expr1);
+                $expr2 = str_replace(')', '', $expr2);
+
+                if (strpos($expr2, "=") !== false) {
+                    $parts = explode("=", $expr2);
+
+                    $y_t = $parts[0]; 
+                    $result1 = $parts[1]; 
+                    $result2 = $parts[2]; 
+
+                    $result2 = $y_t . '=' . $result2;
+                    $result1 = $y_t . '=' . $result1;
+
+                    if(($expr1 == $result1) || ($expr1== $result2) ){
+                        $point = $foundPriklad->getMaxPoints();
+                        $foundPriklad->setGainedPoints($point);
+                        $foundPriklad->setIsCorrect(true);
+                    }
+                    else{
+                        $foundPriklad->setGainedPoints(0);
+                        $foundPriklad->setIsCorrect(false);
+                    }
+                } 
+
+                elseif($expr1 == $expr2){
                     $point = $foundPriklad->getMaxPoints();
                     $foundPriklad->setGainedPoints($point);
                     $foundPriklad->setIsCorrect(true);
                 }
                 else{
                     $foundPriklad->setGainedPoints(0);
+                    $foundPriklad->setIsCorrect(false);
                 }
                     
                 
@@ -394,7 +412,10 @@ class CollectionController extends AbstractController
         }
         
         $response = new JsonResponse([
-            
+            'res1'=>$result1,
+            'res2'=>$result2,
+            'expr1'=>$expr1,
+            'expr2'=>$expr2,
             'id' => $foundPriklad->getId(),
             'prikladId' => $foundPriklad->getPrikladId(),
             'data' => $foundPriklad->getData(),
