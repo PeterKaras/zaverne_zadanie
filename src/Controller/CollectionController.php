@@ -163,7 +163,7 @@ class CollectionController extends AbstractController
             $newPriklad->setPrikladId($priklad->getPrikladId());
             $newPriklad->setName($priklad->getName());
             $newPriklad->setCollectionId($foundCollection->getId());
-            $newPriklad->setMaxPoints($data["maxPoints"] / count($foundPriklady));
+            $newPriklad->setMaxPoints($data["maxPoints"]);
             $newPriklad->setStudent([]); // Initialize the property
             $this->prikladRepository->save($newPriklad, true);
             $newPriklady[] = $newPriklad;
