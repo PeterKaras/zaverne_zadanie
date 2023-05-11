@@ -154,39 +154,42 @@ class CollectionController extends AbstractController
             throw $this->createNotFoundException('Priklady were not found!');
         }
 
+        $newPriklady = [];
+        foreach ($foundPriklady as $priklad) {
+            $newPriklad = new Priklad();
+            $newPriklad->setData($priklad->getData());
+            $newPriklad->setImage($priklad->getImage());
+            $newPriklad->setSolution($priklad->getSolution());
+            $newPriklad->setPrikladId($priklad->getPrikladId());
+            $newPriklad->setName($priklad->getName());
+            $newPriklad->setCollectionId($foundCollection->getId());
+            $newPriklad->setMaxPoints($data["maxPoints"] / count($foundPriklady));
+            $newPriklad->setStudent([]); // Initialize the property
+            $this->prikladRepository->save($newPriklad, true);
+            $newPriklady[] = $newPriklad;
+        }
+
         foreach ($data["students"] as $student) {
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
-            foreach ($foundPriklady as $priklad) {
-                $newPriklad = new Priklad();
-                $newPriklad->setData($priklad->getData());
-                $newPriklad->setImage($priklad->getImage());
-                $newPriklad->setSolution($priklad->getSolution());
-                $newPriklad->setPrikladId($priklad->getPrikladId());
-                $newPriklad->setName($priklad->getName());
-                $newPriklad->setCollectionId($foundCollection->getId());
-                $newPriklad->setMaxPoints($data["maxPoints"] / count($foundPriklady));
+            foreach ($newPriklady as $newPriklad) {
                 $newPriklad->setSingleStudent($foundStudent->getId());
-                $newPriklad->setStudent([]); // Initialize the property
-                $this->prikladRepository->save($newPriklad, true);
-        
+
                 $existingPriklady = $foundStudent->getPriklady();
                 $existingPriklady[] = $newPriklad->getId();
                 $existingPriklady = array_unique($existingPriklady);
                 $foundStudent->setPriklady($existingPriklady);
-        
+
                 $existingStudents = $newPriklad->getStudent();
                 $existingStudents[] = $foundStudent->getId();
                 $existingStudents = array_unique($existingStudents);
                 $newPriklad->setStudent($existingStudents);
-        
+
                 $foundCollection->setStudent($existingStudents);
                 $this->kolekciaRepository->save($foundCollection, true);
             }
             $foundStudent->setTeacher($data["teacherId"]);
             $this->userRepository->save($foundStudent, true);
         }
-        
-        
 
         $response = new JsonResponse([
             'id' => $foundCollection->getId(),
@@ -202,7 +205,6 @@ class CollectionController extends AbstractController
 
     #[Route('/collection/{id}', methods: 'GET')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    //get Priklady by studentId
     public function getCollection($id): JsonResponse
     {
         $encoders = [new JsonEncoder()];
@@ -233,9 +235,9 @@ class CollectionController extends AbstractController
         return new JsonResponse($data, Response::HTTP_OK);
     }
 
-    #[Route('/collection/student/{id}', methods: 'GET')]
+    #[Route('/collection/student/detail/{id}', methods: 'GET')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function getCollectionByStudent($id): JsonResponse
+    public function getCollectionByStudentDetail($id): JsonResponse
     {
         $encoders = [new JsonEncoder()];
         $normalizers = [new ObjectNormalizer()];
@@ -257,6 +259,45 @@ class CollectionController extends AbstractController
                 'isCorrect' => $priklad->isIsCorrect(),
                 'solution' => $priklad->getSolution(),
                 'result' => $priklad->getResult(),
+                'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'), true),
+                "CollectionId" => $priklad->getCollectionId(),
+            ];
+        }
+        return new JsonResponse($data, Response::HTTP_OK);
+    }
+
+    #[Route('/collection/student/{id}', methods: 'GET')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
+    public function getCollectionByStudent($id): JsonResponse
+    {
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
+
+        $data = [];
+        $student = $this->userRepository->findOneBy(["id" => $id]);
+        if (!$student) {
+            return new JsonResponse($data, Response::HTTP_OK);
+        }
+
+        foreach ($student->getPriklady() as $priklad) {
+            $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
+            $collection = $this->kolekciaRepository->findOneBy(["id" => $priklad->getCollectionId()]);
+
+            if (!$priklad) {
+                return new JsonResponse($data, Response::HTTP_OK);
+            }
+            $data[] = [
+                'id' => $priklad->getId(),
+                'prikladId' => $priklad->getPrikladId(),
+                'data' => $priklad->getData(),
+                'name' => $priklad->getName(),
+                'image' => $priklad->getImage(),
+                'dateToOpen' => $collection->getDateToOpen(),
+                'maxPoints' => $priklad->getMaxPoints(),
+                'isSubmitted' => $priklad->isIsSubmitted(),
+                'isCorrect' => $priklad->isIsCorrect(),
+                'solution' => $priklad->getSolution(),
                 'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'), true),
                 "CollectionId" => $priklad->getCollectionId(),
             ];
@@ -363,12 +404,12 @@ class CollectionController extends AbstractController
         if (!$foundPriklad) {
             return new JsonResponse(['error' => 'Priklad not found'], Response::HTTP_NOT_FOUND);
         }
-        
+
         $expr1 = $data["solution"];
-        $result1 =0;
-        $result2=0;
-        $expr2=0;
-        
+        $result1 = 0;
+        $result2 = 0;
+        $expr2 = 0;
+
 
         $foundPriklad->setIsSubmitted(true);
         $foundPriklad->setResult($data["solution"]);
@@ -379,7 +420,7 @@ class CollectionController extends AbstractController
         $expr2 = preg_replace('/\s+/', '', $expr2);
 
         $expr1 = str_replace('\frac', '', $expr1);
-        $expr1 = str_replace('\\','',$expr1);
+        $expr1 = str_replace('\\', '', $expr1);
         $expr2 = str_replace('\dfrac', '', $expr2);
         $expr2 = str_replace('\frac', '', $expr2);
         $expr1 = str_replace('{', '', $expr1);
@@ -424,16 +465,16 @@ class CollectionController extends AbstractController
             $foundPriklad->setGainedPoints(0);
             $foundPriklad->setIsCorrect(false);
         }*/
-            
-        
-        
+
+
+
         $this->prikladRepository->save($foundPriklad, true);
-        
+
         $response = new JsonResponse([
-            'res1'=>$result1,
-            'res2'=>$result2,
-            'expr1'=>$expr1,
-            'expr2'=>$expr2,
+            'res1' => $result1,
+            'res2' => $result2,
+            'expr1' => $expr1,
+            'expr2' => $expr2,
             'id' => $foundPriklad->getId(),
             'prikladId' => $foundPriklad->getPrikladId(),
             'data' => $foundPriklad->getData(),
