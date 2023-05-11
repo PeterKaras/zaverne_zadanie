@@ -156,25 +156,37 @@ class CollectionController extends AbstractController
 
         foreach ($data["students"] as $student) {
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
-            foreach ($foundPriklady as $priklady) {
+            foreach ($foundPriklady as $priklad) {
+                $newPriklad = new Priklad();
+                $newPriklad->setData($priklad->getData());
+                $newPriklad->setImage($priklad->getImage());
+                $newPriklad->setSolution($priklad->getSolution());
+                $newPriklad->setPrikladId($priklad->getPrikladId());
+                $newPriklad->setName($priklad->getName());
+                $newPriklad->setCollectionId($foundCollection->getId());
+                $newPriklad->setMaxPoints($data["maxPoints"] / count($foundPriklady));
+                $newPriklad->setSingleStudent($foundStudent->getId());
+                $newPriklad->setStudent([]); // Initialize the property
+                $this->prikladRepository->save($newPriklad, true);
+        
                 $existingPriklady = $foundStudent->getPriklady();
-                $existingPriklady[] = $priklady->getId();
+                $existingPriklady[] = $newPriklad->getId();
                 $existingPriklady = array_unique($existingPriklady);
                 $foundStudent->setPriklady($existingPriklady);
-
-                $existingStudents = $priklady->getStudent();
+        
+                $existingStudents = $newPriklad->getStudent();
                 $existingStudents[] = $foundStudent->getId();
                 $existingStudents = array_unique($existingStudents);
-                $priklady->setStudent($existingStudents);
-
-                $priklady->setMaxPoints($data["maxPoints"] / count($foundPriklady));
+                $newPriklad->setStudent($existingStudents);
+        
                 $foundCollection->setStudent($existingStudents);
                 $this->kolekciaRepository->save($foundCollection, true);
-                $this->prikladRepository->save($priklady, true);
             }
             $foundStudent->setTeacher($data["teacherId"]);
             $this->userRepository->save($foundStudent, true);
         }
+        
+        
 
         $response = new JsonResponse([
             'id' => $foundCollection->getId(),
@@ -230,29 +242,21 @@ class CollectionController extends AbstractController
         $serializer = new Serializer($normalizers, $encoders);
 
         $data = [];
-        $student = $this->userRepository->findOneBy(["id" => $id]);
-        if (!$student) {
+        $priklady = $this->prikladRepository->findBy(["singleStudent" => $id]);
+        if (!$priklady) {
             return new JsonResponse($data, Response::HTTP_OK);
         }
-
-        foreach ($student->getPriklady() as $priklad) {
-            $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
-            $collection = $this->kolekciaRepository->findOneBy(["id" => $priklad->getCollectionId()]);
-
-            if (!$priklad) {
-                return new JsonResponse($data, Response::HTTP_OK);
-            }
+        foreach ($priklady as $priklad) {
             $data[] = [
                 'id' => $priklad->getId(),
                 'prikladId' => $priklad->getPrikladId(),
                 'data' => $priklad->getData(),
-                'name' => $priklad->getName(),
                 'image' => $priklad->getImage(),
-                'dateToOpen' => $collection->getDateToOpen(),
                 'maxPoints' => $priklad->getMaxPoints(),
                 'isSubmitted' => $priklad->isIsSubmitted(),
                 'isCorrect' => $priklad->isIsCorrect(),
                 'solution' => $priklad->getSolution(),
+                'result' => $priklad->getResult(),
                 'students' => json_decode($serializer->serialize($priklad->getStudent(), 'json'), true),
                 "CollectionId" => $priklad->getCollectionId(),
             ];
@@ -270,7 +274,7 @@ class CollectionController extends AbstractController
 
         $teacher = $this->userRepository->findOneBy(["id" => $id]);
         if (!$teacher) {
-            return new JsonResponse([], Response::HTTP_OK);
+            return new JsonResponse([], Response::HTTP_NOT_FOUND);
         }
         $data = [];
         $collection = $this->kolekciaRepository->findBy(["teacher" => $teacher->getId()]);
@@ -299,13 +303,18 @@ class CollectionController extends AbstractController
         return new JsonResponse($data, Response::HTTP_OK);
     }
 
-    #[Route('/generateExample', methods: 'GET')]
+    #[Route('/generateExample/{id}', methods: 'GET')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function generateExample()
+    public function generateExample($id)
     {
         $encoders = [new JsonEncoder()];
         $normalizers = [new ObjectNormalizer()];
         $serializer = new Serializer($normalizers, $encoders);
+
+        $student = $this->userRepository->findOneBy(["id" => $id]);
+        if (!$student) {
+            return new JsonResponse([], Response::HTTP_NOT_FOUND);
+        }
 
         $priklady = $this->prikladRepository->findAll();
 
@@ -315,9 +324,20 @@ class CollectionController extends AbstractController
 
         $randomIndex = rand(0, count($priklady) - 1);
         $randomPriklad = $priklady[$randomIndex];
+        $newPriklad = new Priklad();
+        $newPriklad->setData($randomPriklad->getData());
+        $newPriklad->setImage($randomPriklad->getImage());
+        $newPriklad->setSolution($randomPriklad->getSolution());
+        $newPriklad->setPrikladId($randomPriklad->getPrikladId());
+        $newPriklad->setName($randomPriklad->getName());
+        $newPriklad->setCollectionId(-1);
+        $newPriklad->setMaxPoints(1);
+        $newPriklad->setSingleStudent($student->getId());
+        $newPriklad->setStudent([]); // Initialize the property
+        $this->prikladRepository->save($newPriklad, true);
 
         $data = [
-            'id' => $randomPriklad->getId(),
+            'id' => $newPriklad->getId(),
             'prikladId' => $randomPriklad->getPrikladId(),
             'name' => $randomPriklad->getName(),
             'data' => $randomPriklad->getData(),
@@ -349,67 +369,65 @@ class CollectionController extends AbstractController
         $result2=0;
         $expr2=0;
         
-        foreach ($foundPriklad->getStudent() as $student) {
-            if ($student == $data["studentId"]) {
 
-                $foundPriklad->setIsSubmitted(true);
-                $foundPriklad->setResult($data["solution"]);
+        $foundPriklad->setIsSubmitted(true);
+        $foundPriklad->setResult($data["solution"]);
 
-                $expr2 = $foundPriklad->getSolution();
+        $expr2 = $foundPriklad->getSolution();
 
-                $expr1 = preg_replace('/\s+/', '', $expr1);
-                $expr2 = preg_replace('/\s+/', '', $expr2);
+        $expr1 = preg_replace('/\s+/', '', $expr1);
+        $expr2 = preg_replace('/\s+/', '', $expr2);
 
-                $expr1 = str_replace('\frac', '', $expr1);
-                $expr1 = str_replace('\\','',$expr1);
-                $expr2 = str_replace('\dfrac', '', $expr2);
-                $expr2 = str_replace('\frac', '', $expr2);
-                $expr1 = str_replace('{', '', $expr1);
-                $expr2 = str_replace('{', '', $expr2);
-                $expr1 = str_replace('}', '', $expr1);
-                $expr2 = str_replace('}', '', $expr2);
-                $expr1 = str_replace('(', '', $expr1);
-                $expr2 = str_replace('(', '', $expr2);
-                $expr1 = str_replace(')', '', $expr1);
-                $expr2 = str_replace(')', '', $expr2);
+        $expr1 = str_replace('\frac', '', $expr1);
+        $expr1 = str_replace('\\','',$expr1);
+        $expr2 = str_replace('\dfrac', '', $expr2);
+        $expr2 = str_replace('\frac', '', $expr2);
+        $expr1 = str_replace('{', '', $expr1);
+        $expr2 = str_replace('{', '', $expr2);
+        $expr1 = str_replace('}', '', $expr1);
+        $expr2 = str_replace('}', '', $expr2);
+        $expr1 = str_replace('(', '', $expr1);
+        $expr2 = str_replace('(', '', $expr2);
+        $expr1 = str_replace(')', '', $expr1);
+        $expr2 = str_replace(')', '', $expr2);
+        $foundPriklad->setIsCorrect(false);
+        $foundPriklad->setIsSubmitted(true);
 
-                if (strpos($expr2, "=") !== false) {
-                    $parts = explode("=", $expr2);
+        /*if (strpos($expr2, "=") !== false) {
+            $parts = explode("=", $expr2);
 
-                    $y_t = $parts[0]; 
-                    $result1 = $parts[1]; 
-                    $result2 = $parts[2]; 
 
-                    $result2 = $y_t . '=' . $result2;
-                    $result1 = $y_t . '=' . $result1;
+            $y_t = $parts[0]; 
+            $result1 = $parts[1]; 
+            $result2 = $parts[2]; 
 
-                    if(($expr1 == $result1) || ($expr1== $result2) ){
-                        $point = $foundPriklad->getMaxPoints();
-                        $foundPriklad->setGainedPoints($point);
-                        $foundPriklad->setIsCorrect(true);
-                    }
-                    else{
-                        $foundPriklad->setGainedPoints(0);
-                        $foundPriklad->setIsCorrect(false);
-                    }
-                } 
+            $result2 = $y_t . '=' . $result2;
+            $result1 = $y_t . '=' . $result1;
 
-                elseif($expr1 == $expr2){
-                    $point = $foundPriklad->getMaxPoints();
-                    $foundPriklad->setGainedPoints($point);
-                    $foundPriklad->setIsCorrect(true);
-                }
-                else{
-                    $foundPriklad->setGainedPoints(0);
-                    $foundPriklad->setIsCorrect(false);
-                }
-                    
-                
-                
-                $this->prikladRepository->save($foundPriklad, true);
-                break;
+            if(($expr1 == $result1) || ($expr1== $result2) ){
+                $point = $foundPriklad->getMaxPoints();
+                $foundPriklad->setGainedPoints($point);
+                $foundPriklad->setIsCorrect(true);
             }
+            else{
+                $foundPriklad->setGainedPoints(0);
+                $foundPriklad->setIsCorrect(false);
+            }
+        } 
+
+        elseif($expr1 == $expr2){
+            $point = $foundPriklad->getMaxPoints();
+            $foundPriklad->setGainedPoints($point);
+            $foundPriklad->setIsCorrect(true);
         }
+        else{
+            $foundPriklad->setGainedPoints(0);
+            $foundPriklad->setIsCorrect(false);
+        }*/
+            
+        
+        
+        $this->prikladRepository->save($foundPriklad, true);
         
         $response = new JsonResponse([
             'res1'=>$result1,
@@ -424,7 +442,6 @@ class CollectionController extends AbstractController
             'isSubmitted' => $foundPriklad->isIsSubmitted(),
             'isCorrect' => $foundPriklad->isIsCorrect(),
             'solution' => $foundPriklad->getSolution(),
-            'students' => $foundPriklad->getStudent(),
             "CollectionId" => $foundPriklad->getCollectionId(),
             'message' => 'Priklad was updated successfully!'
         ]);

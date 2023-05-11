@@ -54,6 +54,9 @@ class Priklad
     private ?array $student;
 
     #[ORM\Column(nullable: true)]
+    private ?int $singleStudent;
+
+    #[ORM\Column(nullable: true)]
     private ?int $teacher = null;
 
     /**
@@ -120,6 +123,11 @@ class Priklad
     public function setCollectionId(?string $collectionId): void
     {
         $this->collectionId = $collectionId;
+    }
+
+    public function setSingleStudent(?int $singleStudent): void
+    {
+        $this->singleStudent = $singleStudent;
     }
 
     public function getId(): ?int
