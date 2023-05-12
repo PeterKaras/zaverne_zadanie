@@ -161,11 +161,22 @@ class CollectionController extends AbstractController
             throw $this->createNotFoundException('Priklady were not found!');
         }
 
+        foreach ($data["students"] as $student) {
+            // check if in prikladyRepository has already been assigned the student to collection (check singleStudent)
+            $foundPriklad = $this->prikladRepository->findOneBy([
+                "name" => $foundCollection->getName(),
+                "singleStudent" => $student["id"]
+            ]);
+            if ($foundPriklad) {
+                return new JsonResponse(["data" => "already assigned to collection one of users with id".$student["id"]], Response::HTTP_BAD_REQUEST);
+            }
+        }
+
         //$newPriklady = [];
         $newStudents = [];
         foreach ($data["students"] as $student) {
             $foundStudent = $this->userRepository->findOneBy(["id" => $student["id"]]);
-            
+
             foreach ($foundPriklady as $priklad) {
                 $newPriklad = new Priklad();
                 $newPriklad->setData($priklad->getData());
@@ -176,32 +187,32 @@ class CollectionController extends AbstractController
                 $newPriklad->setCollectionId($foundCollection->getId());
                 $newPriklad->setMaxPoints($data["maxPoints"]);
                 $newPriklad->setStudent([]);
-        
+
                 $newPriklad->setSingleStudent($foundStudent->getId());
                 $this->prikladRepository->save($newPriklad, true);
                 $newStudents[] = $foundStudent->getId();
                 $newStudents = array_unique($newStudents);
-        
+
                 $existingPriklady = $foundStudent->getPriklady();
                 $existingPriklady[] = $newPriklad->getId();
                 $existingPriklady = array_unique($existingPriklady);
                 $foundStudent->setPriklady($existingPriklady);
-        
+
                 $existingStudents = $newPriklad->getStudent();
                 $existingStudents[] = $foundStudent->getId();
                 $existingStudents = array_unique($existingStudents);
                 $newPriklad->setStudent($newStudents);
-        
+
                 $foundCollection->setStudent($newStudents);
                 $this->kolekciaRepository->save($foundCollection, true);
-        
+
                 $foundStudent->setTeacher($data["teacherId"]);
                 $this->prikladRepository->save($newPriklad, true);
             }
             $this->userRepository->save($foundStudent, true);
 
         }
-        
+
 
 
 
@@ -338,7 +349,13 @@ class CollectionController extends AbstractController
             return new JsonResponse($data, Response::HTTP_OK);
         }
         for ($i = 0; $i < count($collection); $i++) {
-            $priklady = $this->prikladRepository->findBy(["name" => $collection[$i]->getNameOfBlock()]);
+            $priklady = $this->prikladRepository->createQueryBuilder('p')
+                ->where('p.name = :name')
+                ->andWhere('p.student IS NULL')
+                ->andWhere('p.singleStudent IS NULL')
+                ->setParameter('name', $collection[$i]->getNameOfBlock())
+                ->getQuery()
+                ->getResult();
             foreach ($priklady as $priklad) {
                 $priklad = $this->prikladRepository->findOneBy(["id" => $priklad]);
                 $data[] = [
